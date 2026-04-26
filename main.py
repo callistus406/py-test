@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Request, Query, status, HTTPException
+from fastapi import FastAPI, Request, Query, status, HTTPException,Body
 import json
 from models import Create_User
 import database
+from models import Update_task
 
 
 app = FastAPI()
@@ -28,6 +29,12 @@ def get_user_by_id(user_id: int):
 @app.get("/tasks", status_code=status.HTTP_200_OK)
 def get_tasks():
     return {"data": db.get_tasks()}
+
 @app.get("/tasks/{task_id}", status_code=status.HTTP_200_OK)
 def get_task(task_id):
     return {"data": db.get_task(int(task_id))}
+
+
+@app.put("/tasks/{task_id}", status_code=status.HTTP_200_OK)
+def update_task(task_id,body:Update_task):
+    return db.update_task_(int(task_id), body)

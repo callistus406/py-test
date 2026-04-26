@@ -1,5 +1,6 @@
 from  pydantic import BaseModel, Field
 from enum import Enum
+from typing import Optional
 
 class UserRole(str,Enum):
     ADMIN="admin"
@@ -27,15 +28,23 @@ class Update_User(BaseModel):
 
 
 class Create_task(BaseModel):
-    title:str
+    title:Optional [str]
     description:str
     status:str
     priority:str
     start_date: str
-    end__date:str
+    end_date:str
 
 class Creare_comment(BaseModel):
     task_id: int
     user_id: int
     comment: str
     create_at: str
+
+class Update_task(BaseModel):
+    title: Optional [str]   = None
+    description:Optional [str]  = None
+    status:Optional [str]  = None
+    priority:Optional [str]  = None
+    start_date: Optional [str]  = None
+    end_date:Optional [str]  = None

@@ -1,6 +1,9 @@
 import models
 import hashlib
 from typing import List, Dict, Any
+from datetime import datetime
+from fastapi import HTTPException,status
+from models import Update_task
 
 
 def hash_password(password: str) -> str:
@@ -29,6 +32,8 @@ class Database:
                 "is_active": True,
                 "password": hash_password("password"),
                 "role": "user",
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
             },
             {
                 "id": 2,
@@ -38,6 +43,8 @@ class Database:
                 "is_active": True,
                 "password": hash_password("password"),
                 "role": "user",
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
             },
             {
                 "id": 3,
@@ -47,6 +54,8 @@ class Database:
                 "is_active": True,
                 "password": hash_password("password"),
                 "role": "user",
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
             },
         ]
 
@@ -70,6 +79,9 @@ class Database:
                 "email": data["email"],
                 "name": data["name"],
                 "password": hash_password(data["password"]),
+                "updated_at" : datetime.now().isoformat(),
+                "created_at" : datetime.now().isoformat(),
+
             }
         )
         print(self.user)
@@ -98,17 +110,18 @@ class Database:
                 self.user["email"] = email
                 self.user["isactive"] = isactive
                 self.user["role"] = role
+                self.user["updated_at"] = datetime.now().isoformat()
 
     def delete_user(self, id: int):
         for data in self.user:
             del self.user[id]
 
 
-# tasks
 
+    # tasks
 
     def initialize_tasks(self):
-
+# data_main[0]["title"]
         data_main = [
             {
                 "title": "Build login API",
@@ -122,7 +135,8 @@ class Database:
                 "updated_by": 2,
                 "completed_at": None,
                 "id": 1,
-
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
             },
             {
                 "title": "Design database schema",
@@ -136,7 +150,8 @@ class Database:
                 "updated_by": 2,
                 "completed_at": "2026-03-25",
                 "id": 2,
-
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
             },
             {
                 "title": "Write unit tests",
@@ -150,7 +165,8 @@ class Database:
                 "updated_by": 2,
                 "completed_at": None,
                 "id": 3,
-
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
             },
             {
                 "title": "Frontend UI updates",
@@ -164,7 +180,8 @@ class Database:
                 "updated_by": 4,
                 "completed_at": None,
                 "id": 4,
-
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
             },
             {
                 "title": "Deploy to production",
@@ -178,27 +195,60 @@ class Database:
                 "updated_by": 1,
                 "completed_at": None,
                 "id": 5,
-
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
             },
         ]
 
         for task in data_main:
             self.tasks.append(task)
 
-
-
-    def get_tasks(self,):
+    def get_tasks(
+        self,
+    ):
         return self.tasks
-    
-    def get_task(self, id:int):
+
+    def get_task(self, id: int, status: str):
         for data in self.tasks:
             print(data)
             if id == data["id"]:
                 return data
             return None
-        
-    def delete_task(self,id:int):
+
+    def delete_task(self, id: int):
         for data in self.tasks:
             if id == data[id]:
                 del self.tasks["id"]
         return None
+
+    def update_task_(self,id:int,data:Update_task):
+
+        is_found = False
+        response = None
+        for task in self.tasks:
+            
+            if id == task["id"]:
+                is_found = True
+                
+                if data.title is not None:
+                    task["title"] = data.title
+                if data.description is not None:
+                    task["description"] = data.description
+                if data.status is not None:
+                    task["status"] = data.status
+                if data.priority is not None:
+                    task["priority"] = data.priority
+                if data.start_date is not None:
+                    task["start_date"] = data.start_date
+                if data.end_date is not None:
+                    task["end_date"] = data.end_date
+                task["updated_at"] = datetime.now().isoformat(),
+                response = task
+
+
+        if is_found is not True:
+            raise HTTPException(detail="Task not found",status_code=404)    
+        return response
+
+    
+
