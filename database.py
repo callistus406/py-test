@@ -3,7 +3,9 @@ import hashlib
 from typing import List, Dict, Any
 from datetime import datetime
 from fastapi import HTTPException,status
-from models import Update_task
+from models import Update_task,Update_comment,Filter_Task
+
+from typing  import Optional
 
 
 def hash_password(password: str) -> str:
@@ -135,7 +137,7 @@ class Database:
                 "updated_by": 2,
                 "completed_at": None,
                 "id": 1,
-                "created_at": datetime.now().isoformat(),
+                "created_at": datetime.now().isoformat(), 
                 "updated_at": datetime.now().isoformat(),
             },
             {
@@ -203,11 +205,6 @@ class Database:
         for task in data_main:
             self.tasks.append(task)
 
-    def get_tasks(
-        self,
-    ):
-        return self.tasks
-
     def get_task(self, id: int, status: str):
         for data in self.tasks:
             print(data)
@@ -250,29 +247,43 @@ class Database:
             raise HTTPException(detail="Task not found",status_code=404)    
         return response
 
-    def filter_task_(self, data: Update_task):
+    def filter_task_(self, status: Optional [str] = None,priority: Optional [str] = None,    
+    page: Optional [int]  =1 ,
+    limit: Optional [int] = 20):
         filtered_tasks = []
-
+        if  limit > 30 :
+            raise HTTPException(detail="limit cannot exceed 30",status_code=422)
         for task in self.tasks:
-            if data.title is not None and data.title.lower() not in task["title"].lower():
+            if status is not None and task["status"] != status:
                 continue
-            if data.description is not None and data.description.lower() not in task["description"].lower():
+            if priority is not None and task["priority"] != priority:
                 continue
-            if data.status is not None and task["status"] != data.status:
-                continue
-            if data.priority is not None and task["priority"] != data.priority:
-                continue
-            if data.start_date is not None and task["start_date"] != data.start_date:
-                continue
-            if data.end_date is not None and task["end_date"] != data.end_date:
-                continue
+            # if data.start_date is not None and task["start_date"] != data.start_date:
+            #     continue
+            # if data.end_date is not None and task["end_date"] != data.end_date:
+            #     continue
+
+
+        #  page:limit =
+        #     1 :  5  = 4
+        #     2 : 5 = 5
+
+            # [page:page]
+            # 1 : 1 + 5  = 6 
+            # 1:6
+            # 2: 2+10  = 12
+            
+            # 2:12 
+        
+         
 
             filtered_tasks.append(task)
 
+        
+
         if not filtered_tasks:
             raise HTTPException(detail="Task not found", status_code=404)
-
-        return filtered_tasks
+        return filtered_tasks[page:page+limit]
     
     def get_all_comment(self, ): 
         print(self.comments)
