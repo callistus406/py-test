@@ -35,11 +35,21 @@ class Create_task(BaseModel):
     start_date: str
     end_date:str
 
-class Creare_comment(BaseModel):
-    task_id: int
+class Filter_tesk(BaseModel):
+    title: Optional [str]   = None
+    description:Optional [str]  = None
+    status:Optional [str]  = None
+    priority:Optional [str]  = None
+    start_date: Optional [str]  = None
+    end_date:Optional [str]  = None
+
+class Create_comment(BaseModel):
+    comment_id: int
     user_id: int
+    task_id: int
     comment: str
-    create_at: str
+    created_at: str
+
 
 class Update_task(BaseModel):
     title: Optional [str]   = None
@@ -48,3 +58,10 @@ class Update_task(BaseModel):
     priority:Optional [str]  = None
     start_date: Optional [str]  = None
     end_date:Optional [str]  = None
+
+class Update_comment(BaseModel):
+    comment_id:Optional [int]= None
+    user_id:Optional [int]= None
+    task_id:Optional [int]= None
+    comment:Optional [str]= None
+    created_at:Optional [str]= None

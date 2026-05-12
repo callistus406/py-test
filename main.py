@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Query, status, HTTPException,Body
 import json
-from models import Create_User
+from models import Create_User, Filter_tesk,Update_task, Update_comment, 
 import database
 from models import Update_task
 
@@ -38,3 +38,23 @@ def get_task(task_id):
 @app.put("/tasks/{task_id}", status_code=status.HTTP_200_OK)
 def update_task(task_id,body:Update_task):
     return db.update_task_(int(task_id), body)
+@app.get("/comments", status_code=status.HTTP_200_OK)
+def get_all_comment():
+    return {"data": db.get_all_comment()}
+
+@app.get("/comments/{comment_id}", status_code=status.HTTP_200_OK)
+def get_comment(comment_id):
+    return {"data": db.get_comment(int(comment_id))}
+
+@app.delete("/comments/{comment_id}/{user_id}/{task_id}", status_code=status.HTTP_200_OK)
+def delete_comment(comment_id,user_id,task_id):
+   return {"data": db.delete_comment(int(comment_id),int(user_id),int(task_id))}
+
+@app.put("/comments/{comment_id}", status_code=status.HTTP_200_OK)
+def update_comment(comment_id, body:Update_comment ):
+    return {"data": db.update_comment(int(comment_id),body)}
+
+# filter endpoint
+@app.get("/tasks/filter", status_code=status.HTTP_200_OK)
+def filter_tasks(filters: Filter_tesk = Depends()):
+    return {"data": db.filter_task_(filters)}

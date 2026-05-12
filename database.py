@@ -250,5 +250,68 @@ class Database:
             raise HTTPException(detail="Task not found",status_code=404)    
         return response
 
+    def filter_task_(self, data: Update_task):
+        filtered_tasks = []
+
+        for task in self.tasks:
+            if data.title is not None and data.title.lower() not in task["title"].lower():
+                continue
+            if data.description is not None and data.description.lower() not in task["description"].lower():
+                continue
+            if data.status is not None and task["status"] != data.status:
+                continue
+            if data.priority is not None and task["priority"] != data.priority:
+                continue
+            if data.start_date is not None and task["start_date"] != data.start_date:
+                continue
+            if data.end_date is not None and task["end_date"] != data.end_date:
+                continue
+
+            filtered_tasks.append(task)
+
+        if not filtered_tasks:
+            raise HTTPException(detail="Task not found", status_code=404)
+
+        return filtered_tasks
     
+    def get_all_comment(self, ): 
+        print(self.comments)
+        return self.comments
+       
+       
+    def get_comment(self, id: int):
+        for data in self.comments:
+            print(data)
+            if id == data["comment_id"]:
+                return data
+        return None
+          
+
+    def delete_comment(self, id: int, userId: int, taskId:int):
+        for x,data in enumerate(self.comments):
+            print(x,data)
+            if id == data["comment_id"] and userId == data["user_id"] and taskId == data["task_id"]:
+                print(data["comment_id"] )
+                # print(self.comments.data[id])
+                self.comments.pop(x)
+                
+                
+        return None
+    
+    def update_comment(self,id:int, data:Update_comment):
+        is_found = False
+        response = None
+        for com in self.comments:
+            
+            if id == com["comment_id"]:
+                is_found = True
+                com["comment"] = data.comment
+                com["created_at"] = datetime.now().isoformat(),
+                response = com
+        if is_found is not True:
+            raise HTTPException(detail="Comment not found",status_code=404)    
+        return response
+#comment should just be restricted to the owner fo the comment, same applies to deleting
+
+
 
