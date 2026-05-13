@@ -8,8 +8,8 @@ class UserRole(str,Enum):
 
 
 class UserBase(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50, description="The username of the user", examples="user@123")#validat username
-    email: str = Field(...,description="The email of the user", example= "user@gmail.com") #todo validate email
+    username: str = Field(..., min_length=3, max_length=50, description="The username of the user", )#validat username
+    email: str = Field(...,description="The email of the user", ) #todo validate email
     name: str = Field(..., min_length=3, max_length=50, description="The username of the user")
     role: str = UserRole.USER
     password: str= Field(None,min_length=8)
@@ -18,8 +18,8 @@ class Create_User(UserBase):
     password: str= Field(...,min_length=8)
 
 class Update_User(BaseModel):
-    username: str = Field(None, min_length=3, max_length=50, description="The username of the user", examples="user@123")#validat username
-    email: str = Field(None,description="The email of the user", example= "user@gmail.com") #todo validate email
+    username: str = Field(None, min_length=3, max_length=50, description="The username of the user", )#validat username
+    email: str = Field(None,description="The email of the user",) #todo validate email
     name: str = Field(None, min_length=3, max_length=50, description="The username of the user")
 
 
@@ -35,9 +35,8 @@ class Create_task(BaseModel):
     start_date: str
     end_date:str
 
-class Filter_tesk(BaseModel):
-    title: Optional [str]   = None
-    description:Optional [str]  = None
+class Filter_Task(BaseModel):
+    search: Optional [str]   = None
     status:Optional [str]  = None
     priority:Optional [str]  = None
     start_date: Optional [str]  = None

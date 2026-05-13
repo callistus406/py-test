@@ -1,7 +1,8 @@
 from fastapi import FastAPI, Request, Query, status, HTTPException,Body
 import json
-from models import Create_User, Filter_tesk,Update_task, Update_comment, 
+from models import Create_User, Filter_Task,Update_task, Update_comment
 import database
+from typing  import Optional
 from models import Update_task
 
 
@@ -26,9 +27,16 @@ def get_user_by_id(user_id: int):
 
 # task endpoints
 
+# filter endpoint
 @app.get("/tasks", status_code=status.HTTP_200_OK)
-def get_tasks():
-    return {"data": db.get_tasks()}
+def filter_tasks(
+    status: Optional [str] = None,
+    priority: Optional [str] = None,
+    page: Optional [int] = 1,
+    limit: Optional [int] = 50
+):
+    return {"data": db.filter_task_(status,priority,page,limit)}
+
 
 @app.get("/tasks/{task_id}", status_code=status.HTTP_200_OK)
 def get_task(task_id):
@@ -54,7 +62,3 @@ def delete_comment(comment_id,user_id,task_id):
 def update_comment(comment_id, body:Update_comment ):
     return {"data": db.update_comment(int(comment_id),body)}
 
-# filter endpoint
-@app.get("/tasks/filter", status_code=status.HTTP_200_OK)
-def filter_tasks(filters: Filter_tesk = Depends()):
-    return {"data": db.filter_task_(filters)}

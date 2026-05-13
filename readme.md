@@ -57,10 +57,7 @@ comment= {
 
 
 
-1. add timestamp to all the records
-2. complete the task enpoints
-3. add comment feature
-4. add authentication 
-5. add a search filter to the get task endpoint
-
-:wq
+## search field should match text in title and description
+## pagination should filter from 1 not 0
+## create a metadate for show the pagination values and remaning dataset count
+## add comment reply
