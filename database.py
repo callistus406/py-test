@@ -3,7 +3,7 @@ import hashlib
 from typing import List, Dict, Any
 from datetime import datetime
 from fastapi import HTTPException,status
-from models import Update_task,Update_comment,Filter_Task
+from models import Update_task,Update_comment,Update_reply, Filter_Task
 
 from typing  import Optional
 
@@ -20,6 +20,7 @@ class Database:
         self.comments: List[Dict[str, Any]] = []
         self.create_static_users()
         self.initialize_tasks()
+        self.initialize_comment()
 
     def genId(self, lastId: int):
         return lastId + 1
@@ -200,6 +201,7 @@ class Database:
                 "created_at": datetime.now().isoformat(),
                 "updated_at": datetime.now().isoformat(),
             },
+            
         ]
 
         for task in data_main:
@@ -247,58 +249,269 @@ class Database:
             raise HTTPException(detail="Task not found",status_code=404)    
         return response
 
-    def filter_task_(self, status: Optional [str] = None,priority: Optional [str] = None,    
+    def filter_task_(self, status: Optional [str] = None,priority: Optional [str] = None,   
     page: Optional [int]  =1 ,
-    limit: Optional [int] = 20):
+    limit: Optional [int] = 20, search: Optional[str] = None ):
         filtered_tasks = []
-        if  limit > 30 :
+        print(search)
+       
+        if   limit > 30 :
             raise HTTPException(detail="limit cannot exceed 30",status_code=422)
         for task in self.tasks:
+         
             if status is not None and task["status"] != status:
                 continue
             if priority is not None and task["priority"] != priority:
                 continue
-            # if data.start_date is not None and task["start_date"] != data.start_date:
-            #     continue
-            # if data.end_date is not None and task["end_date"] != data.end_date:
-            #     continue
+            if search is not None:
+               
+                searchLower = search.lower()
+                titleMatch = searchLower in task["title"].lower()
+                descriptionMatch = searchLower in task["description"].lower()
+                
+                if not (titleMatch or descriptionMatch):
+                    continue
 
-
-        #  page:limit =
-        #     1 :  5  = 4
-        #     2 : 5 = 5
-
-            # [page:page]
-            # 1 : 1 + 5  = 6 
-            # 1:6
-            # 2: 2+10  = 12
-            
-            # 2:12 
-        
-         
-
+            print(task)        
             filtered_tasks.append(task)
 
         
 
         if not filtered_tasks:
             raise HTTPException(detail="Task not found", status_code=404)
-        return filtered_tasks[page:page+limit]
+        
+        print(filtered_tasks[page:page+limit])
+        print(page, limit)
+       
+        # if page is not None and 
+        # return filtered_tasks[page:page+limit]
+      
+        start = (page - 1) * limit
+        end = start + limit
+        return {
+            "data" : filtered_tasks[start:end],
+            "metadata" : 
+            {
+                "record": len(filtered_tasks),
+                "total" : len(self.tasks),
+            }
+        }
     
-    def get_all_comment(self, ): 
+    def initialize_comment(self):
+    
+        # Sample datasets for Create_comment
+        SAMPLE_COMMENTS: List[dict] = [
+
+        {
+            "comment_id": 1,
+            "user_id": 2,
+            "task_id":1,
+            "comment": "Please update the documentation.",
+            "create_at": datetime.now().isoformat(),
+        },
+        {
+            "comment_id": 2,
+            "user_id": 2,
+            "task_id":1,
+            "comment": "Found a bug in edge case handling.",
+            "create_at": datetime.now().isoformat(),
+        },
+        {
+            "comment_id": 3,
+            "user_id": 11,
+            "task_id":2,
+            "comment": "Ready for QA.",
+            "create_at": datetime.now().isoformat(),
+        },
+        {
+            "comment_id": 4,
+            "user_id": 1,
+            "task_id":3,
+            "comment": "Deployed to staging.",
+            "create_at": datetime.now().isoformat(),
+        },
+        {
+            "comment_id": 5,
+            "user_id": 1,
+            "task_id":3,
+            "comment": "Needs performance benchmarking.",
+            "create_at": datetime.now().isoformat(),
+        },
+        {
+            "comment_id": 6,
+            "task_id": 1,
+            "user_id": 2,
+            "content": "this is from the admin",
+            "created_at": "2026-05-17T10:00:00",
+            "replies": [
+                {
+                    "id": 1,
+                    "userId": 3,
+                    "content": "this is a reply from the user",
+                    "created_at": "2026-05-17T10:01:00"
+                }
+            ]
+        },
+        {
+            "comment_id": 7,
+            "task_id": 1,
+            "user_id": 4,
+            "content": "please review the task updates",
+            "created_at": "2026-05-17T10:02:00",
+            "replies": [
+                {
+                    "id": 1,
+                    "userId": 5,
+                    "content": "looks good to me",
+                    "created_at": "2026-05-17T10:03:00"
+                },
+                {
+                    "id": 2,
+                    "userId": 6,
+                    "content": "approved 👍",
+                    "created_at": "2026-05-17T10:04:00"
+                }
+            ]
+        },
+        {
+            "comment_id": 8,
+            "task_id": 2,
+            "user_id": 7,
+            "content": "can someone check this task?",
+            "created_at": "2026-05-17T10:05:00",
+            "replies": []
+        },
+        {
+            "comment_id": 9,
+            "task_id": 2,
+            "user_id": 8,
+            "content": "UI needs improvement",
+            "created_at": "2026-05-17T10:06:00",
+            "replies": [
+                {
+                    "id": 1,
+                    "userId": 9,
+                    "content": "agree, spacing is off",
+                    "created_at": "2026-05-17T10:07:00"
+                }
+            ]
+        },
+        {
+            "comment_id": 10,
+            "task_id": 3,
+            "user_id": 1,
+            "content": "deployment is ready",
+            "created_at": "2026-05-17T10:08:00",
+            "replies": [
+                {
+                    "id": 1,
+                    "userId": 2,
+                    "content": "tested on staging, all good",
+                    "created_at": "2026-05-17T10:09:00"
+                }
+            ]
+        },
+        {
+            "comment_id": 11,
+            "task_id": 3,
+            "user_id": 3,
+            "content": "database migration completed",
+            "created_at": "2026-05-17T10:10:00",
+            "replies": []
+        },
+        {
+            "comment_id": 12,
+            "task_id": 4,
+            "user_id": 5,
+            "content": "API response is slow",
+            "created_at": "2026-05-17T10:11:00",
+            "replies": [
+                {
+                    "id": 1,
+                    "user": 6,
+                    "content": "we should optimize queries",
+                    "created_at": "2026-05-17T10:12:00"
+                },
+                {
+                    "id": 2,
+                    "userId": 7,
+                    "content": "adding index might help",
+                    "created_at": "2026-05-17T10:13:00"
+                }
+            ]
+        },
+        {
+            "comment_id": 13,
+            "task_id": 4,
+            "user_id": 8,
+            "content": "authentication bug found",
+            "created_at": "2026-05-17T10:14:00",
+            "replies": [
+                {
+                    "id": 1,
+                    "userId": 9,
+                    "content": "I can reproduce it",
+                    "created_at": "2026-05-17T10:15:00"
+                }
+            ]
+        },
+        {
+            "comment_id": 14,
+            "task_id": 3,
+            "user_id": 3,
+            "content": "need clarification on requirements",
+            "created_at": "2026-05-17T10:16:00",
+            "replies": []
+        },
+        {
+            "comment_id": 15,
+            "task_id": 3,
+            "user_id": 10,
+            "content": "final review completed",
+            "created_at": "2026-05-17T10:17:00",
+            "replies": [
+                {
+                    "id": 1,
+                    "userId": 1,
+                    "content": "great work everyone",
+                    "created_at": "2026-05-17T10:18:00"
+                }
+            ]
+        }
+    ]
+    
+        for x in SAMPLE_COMMENTS:
+            self.comments.append(x)
+
+    def get_all_comment(self,  ): 
         print(self.comments)
         return self.comments
        
        
     def get_comment(self, id: int):
+        list =[]
         for data in self.comments:
-            print(data)
-            if id == data["comment_id"]:
-                return data
-        return None
+            if id ==data["task_id"]:
+                print(data)
+                list.append(data)
+        return list
+    
+    def update_reply(self, id:int, reply_id :int, data: Dict) : 
+       
+        for x in self.comments:
+            if id == int(x["comment_id"]):
+             
+                for reply in x["replies"]:
+                    if reply_id == int(reply["id"]):
+                        print(data["content"])
+                        reply["content"] = data["content"]
+                        reply["created_at"] = datetime.now().isoformat(),
+                        # print(x["replies"])
+   
+              
           
 
-    def delete_comment(self, id: int, userId: int, taskId:int):
+    def delete_comment(self, id: int,userId: int, taskId:int):
         for x,data in enumerate(self.comments):
             print(x,data)
             if id == data["comment_id"] and userId == data["user_id"] and taskId == data["task_id"]:
@@ -322,6 +535,10 @@ class Database:
         if is_found is not True:
             raise HTTPException(detail="Comment not found",status_code=404)    
         return response
+
+
+    #  def createComment()   
+
 #comment should just be restricted to the owner fo the comment, same applies to deleting
 
 
