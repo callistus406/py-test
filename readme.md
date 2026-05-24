@@ -61,3 +61,4 @@ comment= {
 ## pagination should filter from 1 not 0
 ## create a metadate for show the pagination values and remaning dataset count
 ## add comment reply
+## login and signup endpoint, role/access management(permission, amin etc, admin assigning task), 

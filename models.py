@@ -60,7 +60,10 @@ class Create_comment(BaseModel):
     task_id: int
     comment: str
     created_at: str
-
+    reply :Optional [str]
+class Update_reply(BaseModel):
+    content: str
+    created_at: Optional  [str]
 
 class Update_task(BaseModel):
     title: Optional [str]   = None
@@ -76,3 +79,18 @@ class Update_comment(BaseModel):
     task_id:Optional [int]= None
     comment:Optional [str]= None
     created_at:Optional [str]= None
+
+
+    # def update_reply(self, id:int, reply_id :int, data: Dict) : 
+       
+    #     for x in self.comments:
+    #         if id == int(x["comment_id"]):
+             
+    #             for reply in x["replies"]:
+    #                 if reply_id == int(reply["id"]):
+    #                     print(data["content"])
+    #                     reply["content"] = data["content"]
+    #                     reply["created_at"] = datetime.now().isoformat(),
+    #                     # print(x["replies"])
+   
+              
