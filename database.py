@@ -3,7 +3,7 @@ import hashlib
 from typing import List, Dict, Any
 from datetime import datetime
 from fastapi import HTTPException,status
-from models import Update_task,Update_comment,Filter_Task
+from models import Update_task,Update_comment,Filter_Task,Create_Task
 
 from typing  import Optional
 
@@ -204,6 +204,17 @@ class Database:
 
         for task in data_main:
             self.tasks.append(task)
+
+    def create_task(self,task:Create_Task):
+        data = task.model_dump()
+        new_task_id = self.tasks[-1]["id"]+1
+        data["id"] = new_task_id
+        data["created_at"] =  datetime.now().isoformat()
+        data["updated_at"] = datetime.now().isoformat()
+        data["user_id"] =  task.user_id
+        data["created_by"] = task.user_id
+        self.tasks.append(data)
+        return self.tasks[-1]
 
     def get_task(self, id: int, status: str):
         for data in self.tasks:
