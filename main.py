@@ -2,8 +2,8 @@ from fastapi import FastAPI, Request, Query, status, HTTPException,Body
 import json
 from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply
 import database
-from typing  import Optional, Dict
-from models import Update_task
+from typing  import Optional,Dict
+from models import Update_task, Create_Task
 
 
 app = FastAPI()
@@ -26,6 +26,10 @@ def get_user_by_id(user_id: int):
     return {"data": db.get_user(user_id)}
 
 # task endpoints
+@app.post("/tasks", status_code=status.HTTP_200_OK)
+def create_task(task:Create_Task):
+    return {"data": db.create_task(task)}
+
 
 # filter endpoint
 @app.get("/tasks", status_code=status.HTTP_200_OK)

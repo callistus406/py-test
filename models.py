@@ -6,6 +6,17 @@ class UserRole(str,Enum):
     ADMIN="admin"
     USER="user"
 
+class Task_Status(str, Enum):
+    PENDING="pending"
+    ACTIVE="active"
+    COMPLETED="completed"
+
+class Task_Priority(str, Enum):
+    HIGH="low"
+    MEDIUM="medium"
+    LOW="low"
+
+
 
 class UserBase(BaseModel):
     username: str = Field(..., min_length=3, max_length=50, description="The username of the user", )#validat username
@@ -27,11 +38,12 @@ class Update_User(BaseModel):
 
 
 
-class Create_task(BaseModel):
-    title:Optional [str]
-    description:str
-    status:str
-    priority:str
+class Create_Task(BaseModel):
+    title: str = Field(...,min_length=10, max_length=150)
+    description:str = Field(...,min_length=10, max_length=500)
+    status: Task_Status = Field(default=Task_Status.PENDING)
+    priority: Task_Priority = Field(default=Task_Priority.LOW)
+    user_id: int = Field(..., description="this is a temporay solution")
     start_date: str
     end_date:str
 
