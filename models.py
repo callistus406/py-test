@@ -19,13 +19,19 @@ class Task_Priority(str, Enum):
 
 
 class UserBase(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50, description="The username of the user", )#validat username
+    user_name: str = Field(..., min_length=3, max_length=50, description="The username of the user", )#validat username
     email: str = Field(...,description="The email of the user", ) #todo validate email
     name: str = Field(..., min_length=3, max_length=50, description="The username of the user")
     role: str = UserRole.USER
     password: str= Field(None,min_length=8)
     
+
+
 class Create_User(UserBase):
+    user_name: str = Field(..., min_length=3, max_length=50, description="The username of the user", )#validat username
+    email: str = Field(...,description="The email of the user", ) #todo validate email
+    name: str = Field(..., min_length=3, max_length=50, description="The username of the user")
+    role: str = UserRole.USER
     password: str= Field(...,min_length=8)
 
 class Update_User(BaseModel):
@@ -55,12 +61,11 @@ class Filter_Task(BaseModel):
     end_date:Optional [str]  = None
 
 class Create_comment(BaseModel):
-    comment_id: int
     user_id: int
     task_id: int
-    comment: str
-    created_at: str
-    reply :Optional [str]
+    comment: str = Field(...,max_length = 800)
+
+
 class Update_reply(BaseModel):
     content: str
     created_at: Optional  [str]
