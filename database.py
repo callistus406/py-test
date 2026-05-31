@@ -3,7 +3,7 @@ import hashlib
 from typing import List, Dict, Any
 from datetime import datetime
 from fastapi import HTTPException,status
-from models import Update_task,Update_comment,Filter_Task,Create_Task
+from models import Update_task,Update_comment,Filter_Task,Create_Task,Create_comment
 
 from typing  import Optional
 
@@ -78,9 +78,10 @@ class Database:
         self.user.append(
             {
                 "id": last_id,
-                "username": data["username"],
+                "user_name": data["user_name"],
                 "email": data["email"],
                 "name": data["name"],
+                "is_active": True,
                 "password": hash_password(data["password"]),
                 "updated_at" : datetime.now().isoformat(),
                 "created_at" : datetime.now().isoformat(),
@@ -218,6 +219,27 @@ class Database:
         self.tasks.append(data)
         return self.tasks[-1]
 
+  
+  
+  
+    def create_comment(self, data:Create_comment):
+        newSet = data.model_dump()
+        lastIndex = self.comments[-1]["comment_id"]
+        startingIndex = lastIndex + 1
+        newSet["comment_id"] = startingIndex
+        newSet["comment"] = data.comment
+        newSet["task_id"] = data.task_id 
+        newSet["created_at"] = datetime.now()
+        newSet["user_id"] = data.user_id 
+
+        self.comments.append(newSet)
+        return self.comments[-1]
+
+
+
+
+  
+  
     def get_task(self, id: int, status: str):
         for data in self.tasks:
             print(data)
@@ -352,7 +374,7 @@ class Database:
             "comment_id": 6,
             "task_id": 1,
             "user_id": 2,
-            "content": "this is from the admin",
+            "comment": "this is from the admin",
             "created_at": "2026-05-17T10:00:00",
             "replies": [
                 {
@@ -367,7 +389,7 @@ class Database:
             "comment_id": 7,
             "task_id": 1,
             "user_id": 4,
-            "content": "please review the task updates",
+            "comment": "please review the task updates",
             "created_at": "2026-05-17T10:02:00",
             "replies": [
                 {
@@ -388,7 +410,7 @@ class Database:
             "comment_id": 8,
             "task_id": 2,
             "user_id": 7,
-            "content": "can someone check this task?",
+            "comment": "can someone check this task?",
             "created_at": "2026-05-17T10:05:00",
             "replies": []
         },
@@ -396,7 +418,7 @@ class Database:
             "comment_id": 9,
             "task_id": 2,
             "user_id": 8,
-            "content": "UI needs improvement",
+            "comment": "UI needs improvement",
             "created_at": "2026-05-17T10:06:00",
             "replies": [
                 {
@@ -411,7 +433,7 @@ class Database:
             "comment_id": 10,
             "task_id": 3,
             "user_id": 1,
-            "content": "deployment is ready",
+            "comment": "deployment is ready",
             "created_at": "2026-05-17T10:08:00",
             "replies": [
                 {
@@ -434,7 +456,7 @@ class Database:
             "comment_id": 12,
             "task_id": 4,
             "user_id": 5,
-            "content": "API response is slow",
+            "comment": "API response is slow",
             "created_at": "2026-05-17T10:11:00",
             "replies": [
                 {
@@ -455,7 +477,7 @@ class Database:
             "comment_id": 13,
             "task_id": 4,
             "user_id": 8,
-            "content": "authentication bug found",
+            "comment": "authentication bug found",
             "created_at": "2026-05-17T10:14:00",
             "replies": [
                 {
@@ -470,7 +492,7 @@ class Database:
             "comment_id": 14,
             "task_id": 3,
             "user_id": 3,
-            "content": "need clarification on requirements",
+            "comment": "need clarification on requirements",
             "created_at": "2026-05-17T10:16:00",
             "replies": []
         },
@@ -478,7 +500,7 @@ class Database:
             "comment_id": 15,
             "task_id": 3,
             "user_id": 10,
-            "content": "final review completed",
+            "comment": "final review completed",
             "created_at": "2026-05-17T10:17:00",
             "replies": [
                 {

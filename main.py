@@ -1,9 +1,10 @@
+# To activate virtual environment run : fastapi % source myenv/Scripts/activate
+# To activate UVICORN run : uvicorn main:app
 from fastapi import FastAPI, Request, Query, status, HTTPException,Body
 import json
-from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply
+from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply, Create_Task, Create_comment
 import database
 from typing  import Optional,Dict
-from models import Update_task, Create_Task
 
 
 app = FastAPI()
@@ -55,6 +56,12 @@ def update_task(task_id,body:Update_task):
 @app.get("/comments", status_code=status.HTTP_200_OK)
 def get_all_comment():
     return {"data": db.get_all_comment()}
+
+
+
+@app.post("/create_commment", status_code = status.HTTP_200_OK)
+def create_comment(data:Create_comment):
+    return{"data": db.create_comment(data)}
 
 @app.get("/comments/{comment_id}", status_code=status.HTTP_200_OK)
 def get_comment(comment_id):
