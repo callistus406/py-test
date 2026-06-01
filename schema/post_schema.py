@@ -16,15 +16,10 @@ class UpdatePost(BaseModel):
     body: Optional[str] = None
     comments: List[Comments]
 
-
-
-
-
-
-
 class  Item(BaseModel):
     name: str
     description: str
     price: float
     qty: int
+
 
