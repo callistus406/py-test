@@ -86,6 +86,9 @@ class Update_comment(BaseModel):
     created_at:Optional [str]= None
 
 
+class Login_DTO(BaseModel):
+    email: str = Field(..., email=True, max_length=40)
+    password: str = Field(...,max_length=20, min_length=5)
     # def update_reply(self, id:int, reply_id :int, data: Dict) : 
        
     #     for x in self.comments:

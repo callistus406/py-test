@@ -1,16 +1,43 @@
 import models
 import hashlib
 from typing import List, Dict, Any
-from datetime import datetime
+from datetime import datetime,timezone,timedelta
 from fastapi import HTTPException,status
-from models import Update_task,Update_comment,Filter_Task,Create_Task,Create_comment
+from models import Update_task,Update_comment,Filter_Task,Create_Task,Create_comment,Login_DTO
+from jose import jwt
 
 from typing  import Optional
 
+SECRET = "ertyuiojhgvbnm"
+ALGO = "HS256" 
 
 def hash_password(password: str) -> str:
     # print(password.encode(),"encoded")
     return hashlib.sha256(password.encode()).digest()
+
+
+
+def validate_password(plain_password:str, hashed_password:str):
+    hash1 = hashed_password
+    hash2 =  hash_password(plain_password)
+    return hash1 == hash2
+
+
+def generate_jwt(data:Dict, exp:int = 30):
+    to_encode = data.copy()
+    conv_time = datetime.now(timezone.utc) + timedelta(minutes=exp)
+
+    to_encode.update({
+        exp:conv_time
+    })
+    # ?generate token
+    return jwt.encode(
+        data,
+        SECRET,
+        algorithm=ALGO
+
+    )
+
 
 
 class Database:
@@ -64,6 +91,33 @@ class Database:
 
         for user in users:
             self.user.append(user)
+
+
+    def  login(self,data: Login_DTO):
+        token = None
+        # get user
+        for user in self.user:
+            print(user["email"].lower() , data.email.lower())
+            if user["email"].lower() == data.email.lower():
+                if validate_password(data.password,user["password"]):
+                    # generate jwt token
+                    token =   generate_jwt({
+                            "sub":1243,
+                        })
+                    print(token)
+                else:
+                    raise HTTPException(status_code=401, detail="Invalid Email Or Password")
+        # else:
+        #     raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        return token
+        #  
+        # get the password
+
+        # march password with stored password
+        # pass
+
+
 
     def create_user(self, user: models.UserBase):
         data = user.model_dump()
