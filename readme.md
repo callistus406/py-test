@@ -62,3 +62,16 @@ comment= {
 ## create a metadate for show the pagination values and remaning dataset count
 ## add comment reply
 ## login and signup endpoint, role/access management(permission, amin etc, admin assigning task), 
+
+
+
+# Add Logging
+# implement authentication with jwt
+# Exception handling
+# middleware implementation
+
+
+# validate the password, 1 uppercase numbers, , length should be ? 8 + special character
+# fix the error handling
+#  hashlib => bcrypt
+

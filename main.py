@@ -1,10 +1,11 @@
-# To activate virtual environment run : fastapi % source myenv/Scripts/activate
-# To activate UVICORN run : uvicorn main:app
+
 from fastapi import FastAPI, Request, Query, status, HTTPException,Body
 import json
-from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply, Create_Task, Create_comment
+from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply, Create_Task, Create_comment,Login_DTO
 import database
 from typing  import Optional,Dict
+from fastapi.responses import JSONResponse
+import logging
 
 
 app = FastAPI()
@@ -12,6 +13,28 @@ app = FastAPI()
 db = database.Database()
 
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+logger = logging.getLogger(__name__)
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request:Request,exc:HTTPException):
+    # logger.error("... Running exception interceptor")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "message": exc.detail,
+        }
+    )
+
+
+@app.post("/login", status_code=status.HTTP_200_OK)
+def createItem(user: Login_DTO):
+    return db.login(user)
 @app.post("/register", status_code=status.HTTP_201_CREATED)
 def createItem(user: Create_User):
     return db.create_user(user)
