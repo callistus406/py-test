@@ -1,28 +1,27 @@
 import models
+import bcrypt
 import hashlib
 from typing import List, Dict, Any
 from datetime import datetime,timezone,timedelta
 from fastapi import HTTPException,status
 from models import Update_task,Update_comment,Filter_Task,Create_Task,Create_comment,Login_DTO
 from jose import jwt
-
 from typing  import Optional
 
 SECRET = "ertyuiojhgvbnm"
 ALGO = "HS256" 
+# def hash_password(password: str) -> str:
+#     # print(password.encode(),"encoded")
+#     return hashlib.sha256(password.encode()).digest()
 
 def hash_password(password: str) -> str:
-    # print(password.encode(),"encoded")
-    return hashlib.sha256(password.encode()).digest()
 
-
-
-def validate_password(plain_password:str, hashed_password:str):
-    hash1 = hashed_password
-    hash2 =  hash_password(plain_password)
-    return hash1 == hash2
-
-
+    # converting password to array of bytes
+    bytes = password.encode('utf-8')
+    # generating the salt
+    salt = bcrypt.gensalt()
+    # Hashing the password
+    return bcrypt.hashpw(bytes, salt)
 def generate_jwt(data:Dict, exp:int = 30):
     to_encode = data.copy()
     conv_time = datetime.now(timezone.utc) + timedelta(minutes=exp)
@@ -35,7 +34,6 @@ def generate_jwt(data:Dict, exp:int = 30):
         data,
         SECRET,
         algorithm=ALGO
-
     )
 
 
@@ -92,33 +90,6 @@ class Database:
         for user in users:
             self.user.append(user)
 
-
-    def  login(self,data: Login_DTO):
-        token = None
-        # get user
-        for user in self.user:
-            print(user["email"].lower() , data.email.lower())
-            if user["email"].lower() == data.email.lower():
-                if validate_password(data.password,user["password"]):
-                    # generate jwt token
-                    token =   generate_jwt({
-                            "sub":1243,
-                        })
-                    print(token)
-                else:
-                    raise HTTPException(status_code=401, detail="Invalid Email Or Password")
-        # else:
-        #     raise HTTPException(status_code=401, detail="Invalid credentials")
-
-        return token
-        #  
-        # get the password
-
-        # march password with stored password
-        # pass
-
-
-
     def create_user(self, user: models.UserBase):
         data = user.model_dump()
         #    find the last user in the db
@@ -144,6 +115,36 @@ class Database:
         )
         print(self.user)
 
+
+    z
+        
+
+    def  login(self,data: Login_DTO):
+        token = None
+        # get user
+        for user in self.user:
+            def validate_password(data.password,user["password"]):
+                pass
+
+            print(user["email"].lower() , data.email.lower())
+            if user["email"].lower() == data.email.lower():
+                if validate_password(data.password,user["password"]):
+                    # generate jwt token
+                    token =   generate_jwt({
+                            "sub":1243,
+                        })
+                    print(token)
+                else:
+                    raise HTTPException(status_code=401, detail="Invalid Email Or Password")
+        # else:
+        #     raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        return token
+        #  
+        # get the password
+
+        # march password with stored password
+        # pass
     def get_users(self):
         users = []
         for user in self.user:
@@ -366,6 +367,7 @@ class Database:
 
         if not filtered_tasks:
             raise HTTPException(detail="Task not found", status_code=404)
+        
         
         print(filtered_tasks[page:page+limit])
         print(page, limit)
