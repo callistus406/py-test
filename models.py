@@ -85,6 +85,12 @@ class Update_comment(BaseModel):
     comment:Optional [str]= None
     created_at:Optional [str]= None
 
+class Login_Response(BaseModel):
+    userId:Optional [int]= None
+    email:Optional [str]= None
+    name:Optional [str]= None
+    token:Optional [str]= None
+
 
 class Login_DTO(BaseModel):
     email: str = Field(..., email=True, max_length=40)
