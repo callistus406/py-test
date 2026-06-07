@@ -1,7 +1,7 @@
 
 from fastapi import FastAPI, Request, Query, status, HTTPException,Body
 import json
-from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply, Create_Task, Create_comment,Login_DTO
+from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply, Create_Task, Create_comment,Login_DTO,Login_Response
 import database
 from typing  import Optional,Dict
 from fastapi.responses import JSONResponse
@@ -32,11 +32,13 @@ async def http_exception_handler(request:Request,exc:HTTPException):
     )
 
 
-@app.post("/login", status_code=status.HTTP_200_OK)
-def createItem(user: Login_DTO):
+@app.post("/login", status_code=status.HTTP_200_OK, response_model=Login_Response)
+def login(user: Login_DTO):
     return db.login(user)
+
+
 @app.post("/register", status_code=status.HTTP_201_CREATED)
-def createItem(user: Create_User):
+def register(user: Create_User):
     return db.create_user(user)
 
 

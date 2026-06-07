@@ -4,9 +4,10 @@ import hashlib
 from typing import List, Dict, Any
 from datetime import datetime,timezone,timedelta
 from fastapi import HTTPException,status
-from models import Update_task,Update_comment,Filter_Task,Create_Task,Create_comment,Login_DTO
+from models import Update_task,Update_comment,Filter_Task,Create_Task,Create_comment,Login_DTO,Login_Response
 from jose import jwt
 from typing  import Optional
+from fastapi.responses import JSONResponse
 
 SECRET = "ertyuiojhgvbnm"
 ALGO = "HS256" 
@@ -19,9 +20,17 @@ def hash_password(password: str) -> str:
     # converting password to array of bytes
     bytes = password.encode('utf-8')
     # generating the salt
-    salt = bcrypt.gensalt()
+    salt = bcrypt.gensalt(10)
     # Hashing the password
     return bcrypt.hashpw(bytes, salt)
+
+def validate_password(hashed_password:str,password:str):
+    print(hashed_password,password)
+    if bcrypt.checkpw(password.encode('utf-8'), hashed_password):
+        return True
+    else:
+        return False
+
 def generate_jwt(data:Dict, exp:int = 30):
     to_encode = data.copy()
     conv_time = datetime.now(timezone.utc) + timedelta(minutes=exp)
@@ -116,35 +125,51 @@ class Database:
         print(self.user)
 
 
-    z
+
         
 
     def  login(self,data: Login_DTO):
         token = None
-        # get user
+        user = None
+        # find the user
         for user in self.user:
-            def validate_password(data.password,user["password"]):
-                pass
+            print(user["email"].lower() == data.email.lower())
+            result = user["email"].lower().strip() == data.email.lower().strip()
 
-            print(user["email"].lower() , data.email.lower())
-            if user["email"].lower() == data.email.lower():
-                if validate_password(data.password,user["password"]):
-                    # generate jwt token
-                    token =   generate_jwt({
-                            "sub":1243,
-                        })
-                    print(token)
-                else:
-                    raise HTTPException(status_code=401, detail="Invalid Email Or Password")
-        # else:
-        #     raise HTTPException(status_code=401, detail="Invalid credentials")
+            print(type(result))
+        
+            if result:
+                # user = user
+                print("user is found")
+            else:
 
-        return token
-        #  
-        # get the password
+                print("user is not found")
 
-        # march password with stored password
-        # pass
+        if user == None:
+            raise HTTPException(detail="Invalid Credential", status_code=401)
+        
+        if validate_password(user["password"], data.password) is  not True:
+              raise HTTPException(detail="Invalid username or Password",status_code=401)
+        
+        # generate jwt token
+        token = generate_jwt({
+                    "sub":1243,
+                })
+        
+
+
+        return Login_Response(
+            userId=user["id"],
+            email=user["email"],
+            token=token,
+            name=user["name"]
+        )
+        
+   
+    
+
+
+
     def get_users(self):
         users = []
         for user in self.user:
