@@ -1,12 +1,12 @@
 
-from fastapi import FastAPI, Request, Query, status, HTTPException,Body
+from fastapi import FastAPI, Request, Query, status, HTTPException,Body,Depends
 import json
 from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply, Create_Task, Create_comment,Login_DTO,Login_Response
 import database
 from typing  import Optional,Dict
 from fastapi.responses import JSONResponse
 import logging
-
+from middleware import validate_token
 
 app = FastAPI()
 
@@ -32,7 +32,7 @@ async def http_exception_handler(request:Request,exc:HTTPException):
     )
 
 
-@app.post("/login", status_code=status.HTTP_200_OK, response_model=Login_Response)
+@app.post("/login", response_model=Login_Response,status_code=status.HTTP_200_OK )
 def login(user: Login_DTO):
     return db.login(user)
 
@@ -43,7 +43,8 @@ def register(user: Create_User):
 
 
 @app.get("/users", status_code=status.HTTP_200_OK)
-def createItem():
+def getUsers(user=Depends(validate_token)):
+    print(user)
     return {"data": db.get_users()}
 
 
@@ -92,8 +93,9 @@ def create_comment(data:Create_comment):
 def get_comment(comment_id):
     return {"data": db.get_comment(int(comment_id))}
 
-@app.delete("/comments/{comment_id}/{user_id}/{task_id}", status_code=status.HTTP_200_OK)
-def delete_comment(comment_id,user_id,task_id):
+@app.delete("/comments/{comment_id}/x{task_id}", status_code=status.HTTP_200_OK)
+def delete_comment(comment_id,user_id,task_id, user= Depends(validate_token)):
+   user_id = user["user_id"]
    return {"data": db.delete_comment(int(comment_id),int(user_id),int(task_id))}
 
 @app.put("/comments/{comment_id}/{reply_id}", status_code=status.HTTP_200_OK)
