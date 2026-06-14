@@ -130,34 +130,25 @@ class Database:
 
     def  login(self,data: Login_DTO):
         token = None
-        user = None
+        user_ = None
         # find the user
         for user in self.user:
-            print(user["email"].lower() == data.email.lower())
             result = user["email"].lower().strip() == data.email.lower().strip()
 
-            print(type(result))
-        
             if result:
-                # user = user
-                print("user is found")
-            else:
+                user_ = user
 
-                print("user is not found")
-
-        if user == None:
+        if user_ == None:
             raise HTTPException(detail="Invalid Credential", status_code=401)
         
-        if validate_password(user["password"], data.password) is  not True:
+        if validate_password(user_["password"], data.password) is  not True:
               raise HTTPException(detail="Invalid username or Password",status_code=401)
         
         # generate jwt token
         token = generate_jwt({
-                    "sub":1243,
+                    "sub":str(user_["id"]),
                 })
         
-
-
         return Login_Response(
             userId=user["id"],
             email=user["email"],
