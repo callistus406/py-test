@@ -4,7 +4,7 @@ import hashlib
 from typing import List, Dict, Any
 from datetime import datetime,timezone,timedelta
 from fastapi import HTTPException,status
-from models import Update_task,Update_comment,Filter_Task,Create_Task,Create_comment,Login_DTO,Login_Response
+from models import Update_task,Update_comment,Filter_Task,Create_Task,Create_comment,Login_DTO,Login_Response,UserRole
 from jose import jwt
 from typing  import Optional
 from fastapi.responses import JSONResponse
@@ -124,8 +124,6 @@ class Database:
         )
         print(self.user)
 
-
-
         
 
     def  login(self,data: Login_DTO):
@@ -146,7 +144,8 @@ class Database:
         
         # generate jwt token
         token = generate_jwt({
-                    "sub":str(user_["id"]),
+                   "sub":str(user_["id"]), 
+                   "role": user_["role"]
                 })
         
         return Login_Response(
@@ -164,7 +163,7 @@ class Database:
     def get_users(self):
         users = []
         for user in self.user:
-            del user["password"]
+            # del user["password"]
             users.append(user)
         return users
 
@@ -318,10 +317,22 @@ class Database:
                 return data
             return None
 
-    def delete_task(self, id: int):
+    def delete_task(self, user_id:int ,id: int,role:str):
+        print(type(id))
+        temp = []
         for data in self.tasks:
-            if id == data[id]:
-                del self.tasks["id"]
+            if id == data["id"]:
+                # check ownership
+                if data["user_id"] == int(user_id) or role == UserRole.ADMIN:
+                    # print(self.tasks[id])
+                    continue
+                else:
+                    raise HTTPException(detail="you are not authorized to delete this resource", status_code=403)
+            else: 
+                print("trtyuioiuytyuioi")
+                temp.append(data)
+        self.tasks.clear()
+        self.tasks.extend(temp)
         return None
 
     def update_task_(self,id:int,data:Update_task):
