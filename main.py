@@ -1,12 +1,12 @@
 
 from fastapi import FastAPI, Request, Query, status, HTTPException,Body,Depends
 import json
-from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply, Create_Task, Create_comment,Login_DTO,Login_Response
+from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply, Create_Task, Create_comment,Login_DTO,Login_Response,UserRole
 import database
 from typing  import Optional,Dict
 from fastapi.responses import JSONResponse
 import logging
-from middleware import validate_token
+from middleware import validate_token,validate_admin,require_role
 
 app = FastAPI()
 
@@ -31,6 +31,7 @@ async def http_exception_handler(request:Request,exc:HTTPException):
         }
     )
 
+# ========================|| Authentication endpoints ||====================================
 
 @app.post("/login", response_model=Login_Response,status_code=status.HTTP_200_OK )
 def login(user: Login_DTO):
@@ -42,20 +43,30 @@ def register(user: Create_User):
     return db.create_user(user)
 
 
+# ========================|| User endpoints ||====================================
+
 @app.get("/users", status_code=status.HTTP_200_OK)
-def getUsers(user=Depends(validate_token)):
+def getUsers(user=Depends(require_role([UserRole.ADMIN]))):
     print(user)
     return {"data": db.get_users()}
 
 
 @app.get("/users/{user_id}", status_code=status.HTTP_200_OK)
-def get_user_by_id(user_id: int):
+def get_user_by_id(user_id: int,user=Depends(require_role([UserRole.ADMIN]))):
     return {"data": db.get_user(user_id)}
 
-# task endpoints
+# ========================|| Task endpoints ||====================================
+
 @app.post("/tasks", status_code=status.HTTP_200_OK)
 def create_task(task:Create_Task):
     return {"data": db.create_task(task)}
+
+@app.delete("/tasks/{id}", status_code=status.HTTP_200_OK)
+def delete_task(id:int,user=Depends(require_role([UserRole.USER,UserRole.ADMIN]))):
+    user_id = user["user_id"]
+    role = user["role"]
+    return {"data": db.delete_task(user_id,id,role)}
+
 
 
 # filter endpoint
@@ -79,11 +90,12 @@ def get_task(task_id):
 @app.put("/tasks/{task_id}", status_code=status.HTTP_200_OK)
 def update_task(task_id,body:Update_task):
     return db.update_task_(int(task_id), body)
+
+# ========================|| Comment endpoints ||====================================
+
 @app.get("/comments", status_code=status.HTTP_200_OK)
 def get_all_comment():
     return {"data": db.get_all_comment()}
-
-
 
 @app.post("/create_commment", status_code = status.HTTP_200_OK)
 def create_comment(data:Create_comment):
