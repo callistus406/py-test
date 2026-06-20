@@ -1,9 +1,9 @@
 
 from fastapi import FastAPI, Request, Query, status, HTTPException,Body,Depends
 import json
-from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply, Create_Task, Create_comment,Login_DTO,Login_Response,UserRole
+from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply, Create_Task, Create_comment,Login_DTO,Login_Response,UserRole, APIResponse
 import database
-from typing  import Optional,Dict
+from typing  import Optional,Dict, TypeVar
 from fastapi.responses import JSONResponse
 import logging
 from middleware import validate_token,validate_admin,require_role
@@ -20,7 +20,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-
+#does this exception handle all task endpoint failure?
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request:Request,exc:HTTPException):
     # logger.error("... Running exception interceptor")
@@ -33,9 +33,12 @@ async def http_exception_handler(request:Request,exc:HTTPException):
 
 # ========================|| Authentication endpoints ||====================================
 
-@app.post("/login", response_model=Login_Response,status_code=status.HTTP_200_OK )
+@app.post("/login", response_model=APIResponse[Login_Response],status_code=status.HTTP_200_OK )
 def login(user: Login_DTO):
-    return db.login(user)
+    
+    return {"success": True,
+    "message": "All users retrieved successfully",
+    "data":db.login(user)}
 
 
 @app.post("/register", status_code=status.HTTP_201_CREATED)
@@ -48,12 +51,12 @@ def register(user: Create_User):
 @app.get("/users", status_code=status.HTTP_200_OK)
 def getUsers(user=Depends(require_role([UserRole.ADMIN]))):
     print(user)
-    return {"data": db.get_users()}
+    return db.get_users()
 
 
 @app.get("/users/{user_id}", status_code=status.HTTP_200_OK)
-def get_user_by_id(user_id: int,user=Depends(require_role([UserRole.ADMIN]))):
-    return {"data": db.get_user(user_id)}
+def get_user_by_id(user_id: int):
+    return  db.get_user(user_id)
 
 # ========================|| Task endpoints ||====================================
 

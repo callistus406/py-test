@@ -1,6 +1,6 @@
 from  pydantic import BaseModel, Field
 from enum import Enum
-from typing import Optional
+from typing import Optional, Generic, TypeVar
 
 class UserRole(str,Enum):
     ADMIN="admin"
@@ -38,9 +38,6 @@ class Update_User(BaseModel):
     username: str = Field(None, min_length=3, max_length=50, description="The username of the user", )#validat username
     email: str = Field(None,description="The email of the user",) #todo validate email
     name: str = Field(None, min_length=3, max_length=50, description="The username of the user")
-
-
-
 
 
 
@@ -87,11 +84,19 @@ class Update_comment(BaseModel):
 
 class Login_Response(BaseModel):
     userId:Optional [int]= None
-    email:Optional [str]= None
     name:Optional [str]= None
+    email:Optional [str]= None
+    role:Optional [str] = None
     token:Optional [str]= None
 
+T = TypeVar('T')
+class APIResponse(BaseModel, Generic[T]):
+    success: bool
+    message: str
+    data: T
+   
 
+#user response, task response, comment response  
 class Login_DTO(BaseModel):
     email: str = Field(..., email=True, max_length=40)
     password: str = Field(...,max_length=20, min_length=5)
