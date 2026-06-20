@@ -1,7 +1,7 @@
 
 from fastapi import FastAPI, Request, Query, status, HTTPException,Body,Depends
 import json
-from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply, Create_Task, Create_comment,Login_DTO,Login_Response,UserRole, APIResponse
+from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply, Create_Task, Create_comment,Login_DTO,Login_Response,UserRole
 import database
 from typing  import Optional,Dict, TypeVar
 from fastapi.responses import JSONResponse
@@ -39,6 +39,7 @@ def login(user: Login_DTO):
     return {"success": True,
     "message": "All users retrieved successfully",
     "data":db.login(user)}
+
 
 
 @app.post("/register", status_code=status.HTTP_201_CREATED)
@@ -85,9 +86,15 @@ def filter_tasks(
     return {"data": db.filter_task_(status,priority,page,limit,search)}
 
 
-@app.get("/tasks/{task_id}", status_code=status.HTTP_200_OK)
+@app.get("/tasks/{task_id}", status_code=status.HTTP_200_OK , response_model=ApiResponse[Get_Task_Response])
 def get_task(task_id):
-    return {"data": db.get_task(int(task_id))}
+    response = db.get_task(int(task_id))
+    print(response)
+    return  {
+        "success":True,
+        "message": "Request Successful",
+        "data": response
+    }
 
 
 @app.put("/tasks/{task_id}", status_code=status.HTTP_200_OK)
