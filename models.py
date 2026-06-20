@@ -1,6 +1,6 @@
 from  pydantic import BaseModel, Field
 from enum import Enum
-from typing import Optional
+from typing import Optional,Generic,TypeVar,Any
 
 class UserRole(str,Enum):
     ADMIN="admin"
@@ -15,6 +15,26 @@ class Task_Priority(str, Enum):
     HIGH="low"
     MEDIUM="medium"
     LOW="low"
+
+T = TypeVar('T') 
+class ApiResponse(BaseModel, Generic[T]):
+    success: bool
+    message: str
+    data: Any
+class Get_Task_Response(BaseModel):
+    title: str 
+    description:str 
+    status: str
+    priority:str
+    user_id: int
+    start_date: str
+    end_date:str
+    created_by: int
+    updated_by: int
+    completed_at: Optional[str]
+    id: int
+    created_at:str
+    updated_at: str
 
 
 
@@ -95,6 +115,8 @@ class Login_Response(BaseModel):
 class Login_DTO(BaseModel):
     email: str = Field(..., email=True, max_length=40)
     password: str = Field(...,max_length=20, min_length=5)
+
+
     # def update_reply(self, id:int, reply_id :int, data: Dict) : 
        
     #     for x in self.comments:
