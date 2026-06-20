@@ -4,7 +4,7 @@ import hashlib
 from typing import List, Dict, Any
 from datetime import datetime,timezone,timedelta
 from fastapi import HTTPException,status
-from models import Update_task,Update_comment,Filter_Task,Create_Task,Create_comment,Login_DTO,Login_Response,UserRole
+from models import Update_task,Update_comment,Filter_Task,Create_Task,Create_comment,Login_DTO,Login_Response,UserRole,ApiResponse
 from jose import jwt
 from typing  import Optional
 from fastapi.responses import JSONResponse
@@ -143,10 +143,7 @@ class Database:
               raise HTTPException(detail="Invalid username or Password",status_code=401)
         
         # generate jwt token
-        token = generate_jwt({
-                   "sub":str(user_["id"]), 
-                   "role": user_["role"]
-                })
+        token = generate_jwt({"sub":str(user_["id"]),  "role": user_["role"] })
         
         return Login_Response(
             userId=user["id"],
@@ -310,12 +307,13 @@ class Database:
 
   
   
-    def get_task(self, id: int, status: str):
+    def get_task(self, id: int,):
         for data in self.tasks:
             print(data)
             if id == data["id"]:
                 return data
             return None
+        
 
     def delete_task(self, user_id:int ,id: int,role:str):
         print(type(id))
