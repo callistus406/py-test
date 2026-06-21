@@ -71,7 +71,7 @@ def delete_task(id:int,user=Depends(require_role([UserRole.USER,UserRole.ADMIN])
 
 
 # filter endpoint
-@app.get("/tasks", status_code=status.HTTP_200_OK)
+@app.get("/tasks", status_code=status.HTTP_200_OK, response_model=ApiResponse[Get_Task_Response])
 def filter_tasks(
     status: Optional [str] = None,
     priority: Optional [str] = None,
@@ -80,7 +80,13 @@ def filter_tasks(
     search: Optional [str]= Query(None), 
    
 ):
-    return {"data": db.filter_task_(status,priority,page,limit,search)}
+    response =  db.filter_task_(status,priority,page,limit,search)
+    return   {
+        "success":True,
+        "message": "Request Successful",
+        "data": response
+    }
+
 
 
 @app.get("/tasks/{task_id}", status_code=status.HTTP_200_OK , response_model=ApiResponse[Get_Task_Response])

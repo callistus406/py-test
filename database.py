@@ -11,9 +11,6 @@ from fastapi.responses import JSONResponse
 
 SECRET = "ertyuiojhgvbnm"
 ALGO = "HS256" 
-# def hash_password(password: str) -> str:
-#     # print(password.encode(),"encoded")
-#     return hashlib.sha256(password.encode()).digest()
 
 def hash_password(password: str) -> str:
 
@@ -302,10 +299,6 @@ class Database:
         self.comments.append(newSet)
         return self.comments[-1]
 
-
-
-
-  
   
     def get_task(self, id: int,):
         for data in self.tasks:
@@ -403,7 +396,7 @@ class Database:
         start = (page - 1) * limit
         end = start + limit
         return {
-            "data" : filtered_tasks[start:end],
+            "tasks" : filtered_tasks[start:end],
             "metadata" : 
             {
                 "record": len(filtered_tasks),
