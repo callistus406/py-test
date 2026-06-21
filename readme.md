@@ -75,3 +75,4 @@ comment= {
 # fix the error handling
 #  hashlib => bcrypt
 
+# add validate token for endpoints, add response body for other endpoints - task, comments, response
