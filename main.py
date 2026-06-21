@@ -1,7 +1,7 @@
 
 from fastapi import FastAPI, Request, Query, status, HTTPException,Body,Depends
 import json
-from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply, Create_Task, Create_comment,Login_DTO,Login_Response,UserRole
+from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply, Create_Task, Create_comment,Login_DTO,Login_Response,UserRole, ApiResponse,Get_Task_Response
 import database
 from typing  import Optional,Dict, TypeVar
 from fastapi.responses import JSONResponse
@@ -33,13 +33,12 @@ async def http_exception_handler(request:Request,exc:HTTPException):
 
 # ========================|| Authentication endpoints ||====================================
 
-@app.post("/login", response_model=APIResponse[Login_Response],status_code=status.HTTP_200_OK )
+@app.post("/login", response_model=ApiResponse[Login_Response],status_code=status.HTTP_200_OK )
 def login(user: Login_DTO):
     
     return {"success": True,
     "message": "All users retrieved successfully",
     "data":db.login(user)}
-
 
 
 @app.post("/register", status_code=status.HTTP_201_CREATED)
@@ -52,29 +51,43 @@ def register(user: Create_User):
 @app.get("/users", status_code=status.HTTP_200_OK)
 def getUsers(user=Depends(require_role([UserRole.ADMIN]))):
     print(user)
-    return db.get_users()
-
+    return {  
+        "success":True,
+        "message": "Successfully Fetched All Users",
+        "data": db.get_users()
+    }
 
 @app.get("/users/{user_id}", status_code=status.HTTP_200_OK)
 def get_user_by_id(user_id: int):
-    return  db.get_user(user_id)
+    return {  
+        "success":True,
+        "message": "Successfully Fetched User",
+        "data": db.get_user(user_id)}
 
 # ========================|| Task endpoints ||====================================
 
 @app.post("/tasks", status_code=status.HTTP_200_OK)
 def create_task(task:Create_Task):
-    return {"data": db.create_task(task)}
+    return {
+        "success":True,
+        "message": "Successfully Created Task",
+        "data": db.create_task(task)}
 
 @app.delete("/tasks/{id}", status_code=status.HTTP_200_OK)
 def delete_task(id:int,user=Depends(require_role([UserRole.USER,UserRole.ADMIN]))):
+    print("test")
     user_id = user["user_id"]
     role = user["role"]
-    return {"data": db.delete_task(user_id,id,role)}
+    print(role, user_id)
+    return { 
+        "success":True,
+        "message": "Successfully deleted field",
+        "data": db.delete_task(user_id,id,role)}
 
 
 
 # filter endpoint
-@app.get("/tasks", status_code=status.HTTP_200_OK)
+@app.get("/tasks", status_code=status.HTTP_200_OK,response_model=ApiResponse)
 def filter_tasks(
     status: Optional [str] = None,
     priority: Optional [str] = None,
@@ -83,10 +96,13 @@ def filter_tasks(
     search: Optional [str]= Query(None), 
    
 ):
-    return {"data": db.filter_task_(status,priority,page,limit,search)}
+    return {
+        "success":True,
+        "message": "Request Successful - getting all task with the desired filter",
+        "data": db.filter_task_(status,priority,page,limit,search)}
 
 
-@app.get("/tasks/{task_id}", status_code=status.HTTP_200_OK , response_model=ApiResponse[Get_Task_Response])
+@app.get("/tasks/{task_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse[Get_Task_Response])
 def get_task(task_id):
     response = db.get_task(int(task_id))
     print(response)
@@ -97,30 +113,50 @@ def get_task(task_id):
     }
 
 
-@app.put("/tasks/{task_id}", status_code=status.HTTP_200_OK)
+@app.put("/tasks/{task_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse)
 def update_task(task_id,body:Update_task):
-    return db.update_task_(int(task_id), body)
+    response=  db.update_task_(int(task_id), body)
+    return  {
+        "success":True,
+        "message": "Request Successful - fetched task by ID",
+        "data": response
+    }
 
 # ========================|| Comment endpoints ||====================================
 
-@app.get("/comments", status_code=status.HTTP_200_OK)
+@app.get("/comments", status_code=status.HTTP_200_OK,response_model=ApiResponse)
 def get_all_comment():
-    return {"data": db.get_all_comment()}
+    return {
+        "success":True,
+        "message": "Request Successful Retrieved All Comments",
+        "data": db.get_all_comment()}
 
-@app.post("/create_commment", status_code = status.HTTP_200_OK)
+@app.post("/create_commment", status_code = status.HTTP_200_OK,response_model=ApiResponse)
 def create_comment(data:Create_comment):
-    return{"data": db.create_comment(data)}
+    return{
+        "success":True,
+        "message": "Request Successful Created a Comment",
+        "data": db.create_comment(data)}
 
-@app.get("/comments/{comment_id}", status_code=status.HTTP_200_OK)
+@app.get("/comments/{comment_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse)
 def get_comment(comment_id):
-    return {"data": db.get_comment(int(comment_id))}
+    return {
+        "success":True,
+        "message": "Request Successful Fetched Comment by ID",
+        "data": db.get_comment(int(comment_id))}
 
-@app.delete("/comments/{comment_id}/x{task_id}", status_code=status.HTTP_200_OK)
+@app.delete("/comments/{comment_id}/x{task_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse)
 def delete_comment(comment_id,user_id,task_id, user= Depends(validate_token)):
    user_id = user["user_id"]
-   return {"data": db.delete_comment(int(comment_id),int(user_id),int(task_id))}
+   return {
+        "success":True,
+        "message": "Request Successful Deleted Comment by ID",
+       "data": db.delete_comment(int(comment_id),int(user_id),int(task_id))}
 
-@app.put("/comments/{comment_id}/{reply_id}", status_code=status.HTTP_200_OK)
+@app.put("/comments/{comment_id}/{reply_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse)
 def update_reply(comment_id, reply_id , body:Dict ):
-    return {"data": db.update_reply(int(comment_id), int(reply_id), body)}
+    return {
+        "success":True,
+        "message": "Request Successful - Updated Comment",
+        "data": db.update_reply(int(comment_id), int(reply_id), body)}
 

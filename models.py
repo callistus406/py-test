@@ -1,6 +1,6 @@
 from  pydantic import BaseModel, Field
 from enum import Enum
-from typing import Optional
+from typing import Optional,  Generic, TypeVar,List
 
 class UserRole(str,Enum):
     ADMIN="admin"
@@ -15,12 +15,19 @@ class Task_Priority(str, Enum):
     HIGH="low"
     MEDIUM="medium"
     LOW="low"
+class Login_Response(BaseModel):
+    userId:Optional [int]= None
+    name:Optional [str]= None
+    email:Optional [str]= None
+    role:Optional [str] = None
+    token:Optional [str]= None
 
 T = TypeVar('T') 
 class ApiResponse(BaseModel, Generic[T]):
     success: bool
     message: str
-    data: Any
+    data: T
+
 class Get_Task_Response(BaseModel):
     title: str 
     description:str 
@@ -35,6 +42,20 @@ class Get_Task_Response(BaseModel):
     id: int
     created_at:str
     updated_at: str
+
+class Reply(BaseModel):
+    id: Optional[int] = None
+    userId: Optional[int] = None
+    content: Optional[int] = None 
+    created_at: Optional[int] = None  
+
+class CommentResponse(BaseModel):
+    comment_id: int
+    user_id: int
+    task_id : int
+    comment :str
+    created_at: str
+    replies: List[Reply] 
 
 
 
@@ -102,18 +123,9 @@ class Update_comment(BaseModel):
     comment:Optional [str]= None
     created_at:Optional [str]= None
 
-class Login_Response(BaseModel):
-    userId:Optional [int]= None
-    name:Optional [str]= None
-    email:Optional [str]= None
-    role:Optional [str] = None
-    token:Optional [str]= None
 
-T = TypeVar('T')
-class APIResponse(BaseModel, Generic[T]):
-    success: bool
-    message: str
-    data: T
+
+
    
 
 #user response, task response, comment response  
