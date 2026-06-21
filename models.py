@@ -15,6 +15,14 @@ class Task_Priority(str, Enum):
     HIGH="low"
     MEDIUM="medium"
     LOW="low"
+
+
+class UserResponse(BaseModel):
+    user_name: str 
+    email: str
+    name: str
+    role: str
+    
 class Login_Response(BaseModel):
     userId:Optional [int]= None
     name:Optional [str]= None

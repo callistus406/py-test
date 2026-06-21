@@ -41,14 +41,16 @@ def login(user: Login_DTO):
     "data":db.login(user)}
 
 
-@app.post("/register", status_code=status.HTTP_201_CREATED)
+@app.post("/register", status_code=status.HTTP_201_CREATED,response_model=ApiResponse[Login_Response])
 def register(user: Create_User):
-    return db.create_user(user)
+    return {"success": True,
+    "message": "User Created Successfully",
+    "data": db.create_user(user)}
 
 
 # ========================|| User endpoints ||====================================
 
-@app.get("/users", status_code=status.HTTP_200_OK)
+@app.get("/users", status_code=status.HTTP_200_OK,response_model=ApiResponse)
 def getUsers(user=Depends(require_role([UserRole.ADMIN]))):
     print(user)
     return {  
@@ -57,7 +59,7 @@ def getUsers(user=Depends(require_role([UserRole.ADMIN]))):
         "data": db.get_users()
     }
 
-@app.get("/users/{user_id}", status_code=status.HTTP_200_OK)
+@app.get("/users/{user_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse)
 def get_user_by_id(user_id: int):
     return {  
         "success":True,
@@ -66,14 +68,14 @@ def get_user_by_id(user_id: int):
 
 # ========================|| Task endpoints ||====================================
 
-@app.post("/tasks", status_code=status.HTTP_200_OK)
+@app.post("/tasks", status_code=status.HTTP_200_OK,response_model=ApiResponse)
 def create_task(task:Create_Task):
     return {
         "success":True,
         "message": "Successfully Created Task",
         "data": db.create_task(task)}
 
-@app.delete("/tasks/{id}", status_code=status.HTTP_200_OK)
+@app.delete("/tasks/{id}", status_code=status.HTTP_200_OK,response_model=ApiResponse)
 def delete_task(id:int,user=Depends(require_role([UserRole.USER,UserRole.ADMIN]))):
     print("test")
     user_id = user["user_id"]
