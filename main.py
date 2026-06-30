@@ -13,12 +13,18 @@ app = FastAPI()
 db = database.Database()
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 
-logger = logging.getLogger(__name__)
+
+# connet db
+
+@app.on_event("startup")
+async def startup_event():
+    await database.connect_mongo()
+
+# @app.on_event("shortdown")
+# async def startup_event():
+#    await  database.close_mongo_connection()
+   
 
 #does this exception handle all task endpoint failure?
 @app.exception_handler(HTTPException)
@@ -41,11 +47,12 @@ def login(user: Login_DTO):
     "data":db.login(user)}
 
 
-@app.post("/register", status_code=status.HTTP_201_CREATED,response_model=ApiResponse[Login_Response])
-def register(user: Create_User):
+@app.post("/register", status_code=status.HTTP_201_CREATED)
+async def register():
+    response  = await db.create_user()}
     return {"success": True,
     "message": "User Created Successfully",
-    "data": db.create_user(user)}
+    "data": response}
 
 
 # ========================|| User endpoints ||====================================
@@ -89,7 +96,7 @@ def delete_task(id:int,user=Depends(require_role([UserRole.USER,UserRole.ADMIN])
 
 
 # filter endpoint
-@app.get("/tasks", status_code=status.HTTP_200_OK,response_model=ApiResponse)
+@app.get("/tasks", status_code=status.HTTP_200_OK, response_model=ApiResponse[Get_Task_Response])
 def filter_tasks(
     status: Optional [str] = None,
     priority: Optional [str] = None,
@@ -98,10 +105,13 @@ def filter_tasks(
     search: Optional [str]= Query(None), 
    
 ):
-    return {
+    response =  db.filter_task_(status,priority,page,limit,search)
+    return   {
         "success":True,
-        "message": "Request Successful - getting all task with the desired filter",
-        "data": db.filter_task_(status,priority,page,limit,search)}
+        "message": "Request Successful",
+        "data": response
+    }
+
 
 
 @app.get("/tasks/{task_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse[Get_Task_Response])
