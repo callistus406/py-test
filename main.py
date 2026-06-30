@@ -13,12 +13,18 @@ app = FastAPI()
 db = database.Database()
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 
-logger = logging.getLogger(__name__)
+
+# connet db
+
+@app.on_event("startup")
+async def startup_event():
+    await database.connect_mongo()
+
+# @app.on_event("shortdown")
+# async def startup_event():
+#    await  database.close_mongo_connection()
+   
 
 #does this exception handle all task endpoint failure?
 @app.exception_handler(HTTPException)
@@ -41,11 +47,12 @@ def login(user: Login_DTO):
     "data":db.login(user)}
 
 
-@app.post("/register", status_code=status.HTTP_201_CREATED,response_model=ApiResponse[Login_Response])
-def register(user: Create_User):
+@app.post("/register", status_code=status.HTTP_201_CREATED)
+async def register():
+    response  = await db.create_user()}
     return {"success": True,
     "message": "User Created Successfully",
-    "data": db.create_user(user)}
+    "data": response}
 
 
 # ========================|| User endpoints ||====================================

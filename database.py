@@ -8,9 +8,49 @@ from models import Update_task,Update_comment,Filter_Task,Create_Task,Create_com
 from jose import jwt
 from typing  import Optional
 from fastapi.responses import JSONResponse
-
+from pymongo import AsyncMongoClient
+from utils import logger
 SECRET = "ertyuiojhgvbnm"
 ALGO = "HS256" 
+
+# database info
+MONGO_URL = "mongodb://localhost:27017/task_manger"
+DATABASE = "task_manger"
+
+
+client = None
+db = None
+
+
+
+async def connect_mongo():
+    try:
+        global client, db
+        client = AsyncMongoClient(MONGO_URL)
+        db = client[DATABASE]
+        await client.admin.command("ping")
+        logger.info( "Database Connected successfully")
+        # await client.close()
+    except Exception as e:
+        raise Exception(
+            "The following error occurred: ", e)
+
+
+async def close_mongo_connection():
+    
+    try:
+        if client:
+            client.close()
+    except Exception as e:
+        print(e)
+
+
+
+
+
+
+# collections
+
 
 def hash_password(password: str) -> str:
 
@@ -96,8 +136,8 @@ class Database:
         for user in users:
             self.user.append(user)
 
-    def create_user(self, user: models.UserBase):
-        data = user.model_dump()
+    async def create_user(self):
+        # data = user.model_dump()
         #    find the last user in the db
         last_id = None
         if len(self.user) == 0:
@@ -105,21 +145,18 @@ class Database:
         else:
             last_user = self.user[-1]
             last_id = self.genId(last_user["id"])
-            print(last_id)
-        self.user.append(
-            {
-                "id": last_id,
-                "user_name": data["user_name"],
-                "email": data["email"],
-                "name": data["name"],
-                "is_active": True,
-                "password": hash_password(data["password"]),
-                "updated_at" : datetime.now().isoformat(),
-                "created_at" : datetime.now().isoformat(),
-
-            }
-        )
-        print(self.user)
+            user_collection = db["users"]
+            password =  hash_password("password")
+            result = await user_collection.insert_one({
+                        "user_name": "Kelly",
+                        "email": "key@gmail.com",
+                        "name": "kelly joe",
+                        "is_active": True,
+                        "password":password,
+                        "role": "user",
+                    })
+        
+        print("result")
 
         
 
