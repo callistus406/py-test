@@ -27,7 +27,9 @@ async def http_exception_handler(request:Request,exc:HTTPException):
     return JSONResponse(
         status_code=exc.status_code,
         content={
+            "success": False,
             "message": exc.detail,
+            "data": []
         }
     )
 
@@ -95,19 +97,19 @@ def filter_tasks(
     priority: Optional [str] = None,
     page: Optional [int] = 1,
     limit: Optional [int] =20,
-    search: Optional [str]= Query(None), 
-   
+    search: Optional [str]= Query(None),   
 ):
+    response = db.filter_task_(status,priority,page,limit,search)
     return {
         "success":True,
         "message": "Request Successful - getting all task with the desired filter",
-        "data": db.filter_task_(status,priority,page,limit,search)}
+        "data": response
+    }
 
 
 @app.get("/tasks/{task_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse[Get_Task_Response])
-def get_task(task_id):
-    response = db.get_task(int(task_id))
-    print(response)
+def get_task(task_id: int):
+    response = db.get_task(task_id)
     return  {
         "success":True,
         "message": "Request Successful",
@@ -116,8 +118,11 @@ def get_task(task_id):
 
 
 @app.put("/tasks/{task_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse)
-def update_task(task_id,body:Update_task):
-    response=  db.update_task_(int(task_id), body)
+def update_task(task_id,body:Update_task,user=Depends(require_role([UserRole.USER,UserRole.ADMIN]))):
+
+    role = user["role"]  
+    user_id = user["user_id"]
+    response=  db.update_task_(int(task_id), body, role, user_id)
     return  {
         "success":True,
         "message": "Request Successful - fetched task by ID",
@@ -134,7 +139,8 @@ def get_all_comment():
         "data": db.get_all_comment()}
 
 @app.post("/create_commment", status_code = status.HTTP_200_OK,response_model=ApiResponse)
-def create_comment(data:Create_comment):
+def create_comment(data:Create_comment,user=Depends(require_role([UserRole.USER,UserRole.ADMIN]))):
+    user_id = user["user_id"]
     return{
         "success":True,
         "message": "Request Successful Created a Comment",
@@ -156,9 +162,11 @@ def delete_comment(comment_id,user_id,task_id, user= Depends(validate_token)):
        "data": db.delete_comment(int(comment_id),int(user_id),int(task_id))}
 
 @app.put("/comments/{comment_id}/{reply_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse)
-def update_reply(comment_id, reply_id , body:Dict ):
-    return {
+def update_reply(comment_id, reply_id , body:Dict, user=Depends(require_role([UserRole.USER,UserRole.ADMIN]) )):
+     user_id = user["user_id"]
+     role = user["role"]
+     return {
         "success":True,
         "message": "Request Successful - Updated Comment",
-        "data": db.update_reply(int(comment_id), int(reply_id), body)}
+        "data": db.update_reply(int(comment_id), int(reply_id), body, user_id, role)}
 

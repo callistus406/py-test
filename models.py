@@ -1,9 +1,9 @@
 from  pydantic import BaseModel, Field
 from enum import Enum
-from typing import Optional,  Generic, TypeVar,List
+from typing import Optional,  Generic, TypeVar,List,Any
 
 class UserRole(str,Enum):
-    ADMIN="admin"
+    ADMIN="Admin" 
     USER="user"
 
 class Task_Status(str, Enum):
@@ -22,7 +22,7 @@ class UserResponse(BaseModel):
     email: str
     name: str
     role: str
-    
+
 class Login_Response(BaseModel):
     userId:Optional [int]= None
     name:Optional [str]= None
@@ -34,7 +34,7 @@ T = TypeVar('T')
 class ApiResponse(BaseModel, Generic[T]):
     success: bool
     message: str
-    data: T
+    data: Any
 
 class Get_Task_Response(BaseModel):
     title: str 

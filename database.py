@@ -1,6 +1,5 @@
 import models
 import bcrypt
-import hashlib
 from typing import List, Dict, Any
 from datetime import datetime,timezone,timedelta
 from fastapi import HTTPException,status
@@ -90,7 +89,7 @@ class Database:
                 "name": "hailey kent",
                 "is_active": True,
                 "password": hash_password("password"),
-                "role": "user",
+                "role": "Admin",
                 "created_at": datetime.now().isoformat(),
                 "updated_at": datetime.now().isoformat(),
             },
@@ -146,10 +145,11 @@ class Database:
         token = generate_jwt({"sub":str(user_["id"]),  "role": user_["role"] })
         
         return Login_Response(
-            userId=user["id"],
-            email=user["email"],
+            userId=user_["id"],
+            email=user_["email"],
             token=token,
-            name=user["name"]
+            name=user_["name"],
+            role = user_["role"]
         )
         
    
@@ -312,7 +312,8 @@ class Database:
             print(data)
             if id == data["id"]:
                 return data
-            return None
+            
+        raise HTTPException(detail="Task not found",status_code=404)
         
 
     def delete_task(self, user_id:int ,id: int,role:str):
@@ -333,34 +334,45 @@ class Database:
         self.tasks.extend(temp)
         return None
 
-    def update_task_(self,id:int,data:Update_task):
-
-        is_found = False
+    def update_task_(self,id:int,data:Update_task, role, user_id):
+        is_TaskFound = False
+        isRoleOwner = False
         response = None
+        print(type(user_id))
         for task in self.tasks:
             
-            if id == task["id"]:
-                is_found = True
+            if (id == task["id"] ):
+                is_TaskFound = True
+               
+                print(type( task["user_id"]))
+                print( user_id == task["user_id"])
+                if (role == UserRole.ADMIN ) or  int(user_id) ==task["user_id"]:
+                    isRoleOwner = True
+                    print(user_id, task["user_id"] )
+                    if data.title is not None:
+                        task["title"] = data.title
+                    if data.description is not None:
+                        task["description"] = data.description
+                    if data.status is not None:
+                        task["status"] = data.status
+                    if data.priority is not None:
+                        task["priority"] = data.priority
+                    if data.start_date is not None:
+                        task["start_date"] = data.start_date
+                    if data.end_date is not None:
+                        task["end_date"] = data.end_date
+                    task["updated_at"] = datetime.now().isoformat(),
+                    response = task
+                    print("finished")
+        if is_TaskFound == False :
+                 print("Accees1")  
+                 raise HTTPException(detail="Task not found",status_code=404) 
+              
+        if isRoleOwner ==False:
+                print("Accees2")
+                raise HTTPException(detail="Unauthorize access, only admin and owners can update task",status_code=404)
                 
-                if data.title is not None:
-                    task["title"] = data.title
-                if data.description is not None:
-                    task["description"] = data.description
-                if data.status is not None:
-                    task["status"] = data.status
-                if data.priority is not None:
-                    task["priority"] = data.priority
-                if data.start_date is not None:
-                    task["start_date"] = data.start_date
-                if data.end_date is not None:
-                    task["end_date"] = data.end_date
-                task["updated_at"] = datetime.now().isoformat(),
-                response = task
-
-
-        if is_found is not True:
-            raise HTTPException(detail="Task not found",status_code=404)    
-        return response
+        return response   
 
     def filter_task_(self, status: Optional [str] = None,priority: Optional [str] = None,   
     page: Optional [int]  =1 ,
@@ -625,10 +637,10 @@ class Database:
               
           
 
-    def delete_comment(self, id: int,userId: int, taskId:int):
+    def delete_comment(self, id:int, taskId:int, user_id:int):
         for x,data in enumerate(self.comments):
             print(x,data)
-            if id == data["comment_id"] and userId == data["user_id"] and taskId == data["task_id"]:
+            if id == data["comment_id"] and user_id == data["user_id"] and taskId == data["task_id"]:
                 print(data["comment_id"] )
                 # print(self.comments.data[id])
                 self.comments.pop(x)
