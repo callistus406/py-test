@@ -1,6 +1,6 @@
 import models
 import bcrypt
-import hashlib
+from bson import ObjectId
 from typing import List, Dict, Any
 from datetime import datetime,timezone,timedelta
 from fastapi import HTTPException,status
@@ -29,6 +29,7 @@ async def connect_mongo():
         client = AsyncMongoClient(MONGO_URL)
         db = client[DATABASE]
         await client.admin.command("ping")
+    
         logger.info( "Database Connected successfully")
         # await client.close()
     except Exception as e:
@@ -127,7 +128,7 @@ class Database:
                 "name": "hailey kent",
                 "is_active": True,
                 "password": hash_password("password"),
-                "role": "user",
+                "role": "Admin",
                 "created_at": datetime.now().isoformat(),
                 "updated_at": datetime.now().isoformat(),
             },
@@ -147,24 +148,53 @@ class Database:
             last_id = self.genId(last_user["id"])
             user_collection = db["users"]
             password =  hash_password("password")
-            result = await user_collection.insert_one({
-                        "user_name": "Kelly",
-                        "email": "key@gmail.com",
-                        "name": "kelly joe",
-                        "is_active": True,
-                        "password":password,
-                        "role": "user",
-                    })
+            result = await user_collection.insert_many([
+            {
+                "id": 1,
+                "user_name": "Kelly",
+                "email": "key@gmail.com",
+                "name": "kelly joe",
+                "is_active": True,
+                "password": hash_password("password"),
+                "role": "user",
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
+            },
+            {
+                "id": 2,
+                "user_name": "kenneth",
+                "email": "kenet@gmail.com",
+                "name": "kennet bully",
+                "is_active": True,
+                "password": hash_password("password"),
+                "role": "user",
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
+            },
+            {
+                "id": 3,
+                "user_name": "hailey",
+                "email": "hailey@gmail.com",
+                "name": "hailey kent",
+                "is_active": True,
+                "password": hash_password("password"),
+                "role": "Admin",
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
+            },
+        ])
         
         print("result")
 
         
 
-    def  login(self,data: Login_DTO):
+    async def  login(self,data: Login_DTO):
         token = None
         user_ = None
         # find the user
-        for user in self.user:
+        user_collection = db["users"]
+        users = await user_collection.find({}).to_list(length=None)
+        for user in users:
             result = user["email"].lower().strip() == data.email.lower().strip()
 
             if result:
@@ -175,36 +205,40 @@ class Database:
         
         if validate_password(user_["password"], data.password) is  not True:
               raise HTTPException(detail="Invalid username or Password",status_code=401)
-        
+        print("check")
         # generate jwt token
         token = generate_jwt({"sub":str(user_["id"]),  "role": user_["role"] })
         
         return Login_Response(
-            userId=user["id"],
-            email=user["email"],
+            userId=user_["id"],
+            email=user_["email"],
             token=token,
-            name=user["name"]
+            name=user_["name"],
+            role = user_["role"]
         )
         
    
     
 
-
-
-    def get_users(self):
-        users = []
-        for user in self.user:
-            # del user["password"]
-            users.append(user)
+    async def get_users(self):
+        user_collection = db["users"]
+        users = await user_collection.find({}).to_list(length=None)
+        for user in users:
+            user["_id"] = str(user["_id"])
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
         return users
 
-    def get_user(self, id: int):
-        for user in self.user:
-            if user["id"] == id:
-                del user["password"]
-                return user
+    async def get_user(self, id: str):
+        user_collection = db["users"]
+        user = await user_collection.find_one({"_id": ObjectId(id)})
+        if user:
+            user["_id"] = str(user["_id"])
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user
 
-    def update_user(
+    async def update_user(
         self, id: int, username: str, name: str, email: str, isactive: bool, role: str
     ):
         for data in self.user:
@@ -217,9 +251,21 @@ class Database:
                 self.user["role"] = role
                 self.user["updated_at"] = datetime.now().isoformat()
 
-    def delete_user(self, id: int):
-        for data in self.user:
-            del self.user[id]
+    async def delete_user(self, id: str):
+
+        user_collection = db["users"]
+        user = await user_collection.find_one({"_id": ObjectId(id)})
+        print("active")
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        await user_collection.delete_one({"_id": ObjectId(id)})
+        if user:
+            user["_id"] = str(user["_id"])
+        return user
+       
+          
+
 
 
 
@@ -309,18 +355,77 @@ class Database:
         for task in data_main:
             self.tasks.append(task)
 
-    def create_task(self,task:Create_Task):
-        data = task.model_dump()
-        new_task_id = self.tasks[-1]["id"]+1
-        data["id"] = new_task_id
-        data["created_at"] =  datetime.now().isoformat()
-        data["updated_at"] = datetime.now().isoformat()
-        data["user_id"] =  task.user_id
-        data["created_by"] = task.user_id
-        self.tasks.append(data)
-        return self.tasks[-1]
+    async def create_task(self):
+        if len(self.tasks) ==0:
+            last_id = 1
+        else:
+            last_task = self.tasks[-1]
+            last_id = self.genId(last_task["id"])
+            task_collection = db["task"]
+            result =  await task_collection.insert_many([{
+                "title": "Build login API",
+                "description": "Develop and test authentication endpoints",
+                "status": "active",
+                "priority": "high",
+                "start_date": "2026-04-01",
+                "end_date": "2026-04-07",
+                "user_id": 1,
+                "created_by": 1,
+                "updated_by": 2,
+                "completed_at": None,
+                "id": 1,
+                "created_at": datetime.now().isoformat(), 
+                "updated_at": datetime.now().isoformat(),
+            },
+            {
+                "title": "Design database schema",
+                "description": "Create ER diagram and define relationships",
+                "status": "completed",
+                "priority": "high",
+                "start_date": "2026-03-20",
+                "end_date": "2026-03-25",
+                "user_id": 2,
+                "created_by": 1,
+                "updated_by": 2,
+                "completed_at": "2026-03-25",
+                "id": 2,
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
+            },
+            {
+                "title": "Write unit tests",
+                "description": "Add tests for service layer functions",
+                "status": "pending",
+                "priority": "medium",
+                "start_date": "2026-04-10",
+                "end_date": "2026-04-15",
+                "user_id": 3,
+                "created_by": 2,
+                "updated_by": 2,
+                "completed_at": None,
+                "id": 3,
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
+            },
+            {
+                "title": "Frontend UI updates",
+                "description": "Improve dashboard layout and responsiveness",
+                "status": "active",
+                "priority": "medium",
+                "start_date": "2026-04-02",
+                "end_date": "2026-04-12",
+                "user_id": 4,
+                "created_by": 3,
+                "updated_by": 4,
+                "completed_at": None,
+                "id": 4,
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
+            }])
+            
+        print(result)
 
-  
+        
   
   
     def create_comment(self, data:Create_comment):
@@ -337,60 +442,79 @@ class Database:
         return self.comments[-1]
 
   
-    def get_task(self, id: int,):
-        for data in self.tasks:
-            print(data)
-            if id == data["id"]:
-                return data
-            return None
+    async def get_task(self, id: int,):
+        task_collection = db["task"]
+        task = await task_collection.find_one({"_id": ObjectId(id)})
+        if task:
+            task["_id"] = str(task["_id"])
+        if not task:
+            raise HTTPException(status_code=404, detail="User not found")
+        return task
         
 
-    def delete_task(self, user_id:int ,id: int,role:str):
-        print(type(id))
+    async def delete_task(self, id: str,user_ID:int, role:str):
+        print("check")
+        task_collection = db["task"]
+        task = await task_collection.find_one({"_id": ObjectId(id)})
+        print(task)
         temp = []
-        for data in self.tasks:
-            if id == data["id"]:
-                # check ownership
-                if data["user_id"] == int(user_id) or role == UserRole.ADMIN:
-                    # print(self.tasks[id])
-                    continue
-                else:
-                    raise HTTPException(detail="you are not authorized to delete this resource", status_code=403)
-            else: 
-                print("trtyuioiuytyuioi")
-                temp.append(data)
-        self.tasks.clear()
-        self.tasks.extend(temp)
-        return None
 
-    def update_task_(self,id:int,data:Update_task):
+        print(role)
+        print(task["user_id"])
+        print(type(task["user_id"]), type(int(user_ID)))
+        print(role == UserRole.ADMIN)
+        
+        if  task:   
+            if  task["user_id"] != int(user_ID) and role != UserRole.ADMIN:
+                print("check")
+                raise HTTPException(detail="you are not authorized to delete this Task", status_code=403)
+            else:
+                await task_collection.delete_one({"_id": ObjectId(id)})
+                if task:
+                    task["_id"] = str(task["_id"])
+                return task
+        else:
+                raise HTTPException(detail="Task not found", status_code=403)
 
-        is_found = False
+    def update_task_(self,id:int,data:Update_task, role, user_id):
+        is_TaskFound = False
+        isRoleOwner = False
         response = None
+        print(type(user_id))
         for task in self.tasks:
             
-            if id == task["id"]:
-                is_found = True
+            if (id == task["id"] ):
+                is_TaskFound = True
+               
+                print(type( task["user_id"]))
+                print( user_id == task["user_id"])
+                if (role == UserRole.ADMIN ) or  int(user_id) ==task["user_id"]:
+                    isRoleOwner = True
+                    print(user_id, task["user_id"] )
+                    if data.title is not None:
+                        task["title"] = data.title
+                    if data.description is not None:
+                        task["description"] = data.description
+                    if data.status is not None:
+                        task["status"] = data.status
+                    if data.priority is not None:
+                        task["priority"] = data.priority
+                    if data.start_date is not None:
+                        task["start_date"] = data.start_date
+                    if data.end_date is not None:
+                        task["end_date"] = data.end_date
+                    task["updated_at"] = datetime.now().isoformat(),
+                    response = task
+                    print("finished")
+        if is_TaskFound == False :
+                 print("Accees1")  
+                 raise HTTPException(detail="Task not found",status_code=404) 
+              
+        if isRoleOwner ==False:
+                print("Accees2")
+                raise HTTPException(detail="Unauthorize access, only admin and owners can update task",status_code=404)
                 
-                if data.title is not None:
-                    task["title"] = data.title
-                if data.description is not None:
-                    task["description"] = data.description
-                if data.status is not None:
-                    task["status"] = data.status
-                if data.priority is not None:
-                    task["priority"] = data.priority
-                if data.start_date is not None:
-                    task["start_date"] = data.start_date
-                if data.end_date is not None:
-                    task["end_date"] = data.end_date
-                task["updated_at"] = datetime.now().isoformat(),
-                response = task
-
-
-        if is_found is not True:
-            raise HTTPException(detail="Task not found",status_code=404)    
-        return response
+        return response   
 
     def filter_task_(self, status: Optional [str] = None,priority: Optional [str] = None,   
     page: Optional [int]  =1 ,
@@ -512,7 +636,7 @@ class Database:
                 {
                     "id": 2,
                     "userId": 6,
-                    "content": "approved 👍",
+                    "content": "approved",
                     "created_at": "2026-05-17T10:04:00"
                 }
             ]
@@ -627,18 +751,210 @@ class Database:
         for x in SAMPLE_COMMENTS:
             self.comments.append(x)
 
-    def get_all_comment(self,  ): 
-        print(self.comments)
-        return self.comments
+
+    async def create_comment(self):
+        if len(self.comments) ==0:
+            last_id = 1
+        else:
+            last_comments = self.comments[-1]
+            last_id = self.genId(last_comments["id"])
+            comment_collection = db["comments"]
+            result =  await comment_collection.insert_many([{
+                {
+            "comment_id": 1,
+            "user_id": 2,
+            "task_id":1,
+            "comment": "Please update the documentation.",
+            "create_at": datetime.now().isoformat(),
+        },
+        {
+            "comment_id": 2,
+            "user_id": 2,
+            "task_id":1,
+            "comment": "Found a bug in edge case handling.",
+            "create_at": datetime.now().isoformat(),
+        },
+        {
+            "comment_id": 3,
+            "user_id": 11,
+            "task_id":2,
+            "comment": "Ready for QA.",
+            "create_at": datetime.now().isoformat(),
+        },
+        {
+            "comment_id": 4,
+            "user_id": 1,
+            "task_id":3,
+            "comment": "Deployed to staging.",
+            "create_at": datetime.now().isoformat(),
+        },
+        {
+            "comment_id": 5,
+            "user_id": 1,
+            "task_id":3,
+            "comment": "Needs performance benchmarking.",
+            "create_at": datetime.now().isoformat(),
+        },
+        {
+            "comment_id": 6,
+            "task_id": 1,
+            "user_id": 2,
+            "comment": "this is from the admin",
+            "created_at": "2026-05-17T10:00:00",
+            "replies": [
+                {
+                    "id": 1,
+                    "userId": 3,
+                    "content": "this is a reply from the user",
+                    "created_at": "2026-05-17T10:01:00"
+                }
+            ]
+        },
+        {
+            "comment_id": 7,
+            "task_id": 1,
+            "user_id": 4,
+            "comment": "please review the task updates",
+            "created_at": "2026-05-17T10:02:00",
+            "replies": [
+                {
+                    "id": 1,
+                    "userId": 5,
+                    "content": "looks good to me",
+                    "created_at": "2026-05-17T10:03:00"
+                },
+                {
+                    "id": 2,
+                    "userId": 6,
+                    "content": "approved",
+                    "created_at": "2026-05-17T10:04:00"
+                }
+            ]
+        },
+        {
+            "comment_id": 8,
+            "task_id": 2,
+            "user_id": 7,
+            "comment": "can someone check this task?",
+            "created_at": "2026-05-17T10:05:00",
+            "replies": []
+        },
+        {
+            "comment_id": 9,
+            "task_id": 2,
+            "user_id": 8,
+            "comment": "UI needs improvement",
+            "created_at": "2026-05-17T10:06:00",
+            "replies": [
+                {
+                    "id": 1,
+                    "userId": 9,
+                    "content": "agree, spacing is off",
+                    "created_at": "2026-05-17T10:07:00"
+                }
+            ]
+        },
+        {
+            "comment_id": 10,
+            "task_id": 3,
+            "user_id": 1,
+            "comment": "deployment is ready",
+            "created_at": "2026-05-17T10:08:00",
+            "replies": [
+                {
+                    "id": 1,
+                    "userId": 2,
+                    "content": "tested on staging, all good",
+                    "created_at": "2026-05-17T10:09:00"
+                }
+            ]
+        },
+        {
+            "comment_id": 11,
+            "task_id": 3,
+            "user_id": 3,
+            "content": "database migration completed",
+            "created_at": "2026-05-17T10:10:00",
+            "replies": []
+        },
+        {
+            "comment_id": 12,
+            "task_id": 4,
+            "user_id": 5,
+            "comment": "API response is slow",
+            "created_at": "2026-05-17T10:11:00",
+            "replies": [
+                {
+                    "id": 1,
+                    "user": 6,
+                    "content": "we should optimize queries",
+                    "created_at": "2026-05-17T10:12:00"
+                },
+                {
+                    "id": 2,
+                    "userId": 7,
+                    "content": "adding index might help",
+                    "created_at": "2026-05-17T10:13:00"
+                }
+            ]
+        },
+        {
+            "comment_id": 13,
+            "task_id": 4,
+            "user_id": 8,
+            "comment": "authentication bug found",
+            "created_at": "2026-05-17T10:14:00",
+            "replies": [
+                {
+                    "id": 1,
+                    "userId": 9,
+                    "content": "I can reproduce it",
+                    "created_at": "2026-05-17T10:15:00"
+                }
+            ]
+        },
+        {
+            "comment_id": 14,
+            "task_id": 3,
+            "user_id": 3,
+            "comment": "need clarification on requirements",
+            "created_at": "2026-05-17T10:16:00",
+            "replies": []
+        },
+        {
+            "comment_id": 15,
+            "task_id": 3,
+            "user_id": 10,
+            "comment": "final review completed",
+            "created_at": "2026-05-17T10:17:00",
+            "replies": [
+                {
+                    "id": 1,
+                    "userId": 1,
+                    "content": "great work everyone",
+                    "created_at": "2026-05-17T10:18:00"
+                }
+            ]
+        }
+            }])
+    async def get_all_comment(self,): 
+        comment_collection = db["tasks"]
+        comment = await comment_collection.find({}).to_list(length=None)
+        if comment:
+            comment["_id"] = str(comment["_id"])
+        if not comment:
+            raise HTTPException(status_code=404, detail="Comment not found")
+        return comment
        
        
-    def get_comment(self, id: int):
-        list =[]
-        for data in self.comments:
-            if id ==data["task_id"]:
-                print(data)
-                list.append(data)
-        return list
+    async def get_comment(self, id: int):
+        comment_collection = db["tasks"]
+        comment = await comment_collection.find_one({"_id": ObjectId(id)})
+        if comment:
+            comment["_id"] = str(comment["_id"])
+        if not comment:
+            raise HTTPException(status_code=404, detail="Comment not found")
+        return comment
     
     def update_reply(self, id:int, reply_id :int, data: Dict) : 
        
@@ -655,16 +971,34 @@ class Database:
               
           
 
-    def delete_comment(self, id: int,userId: int, taskId:int):
-        for x,data in enumerate(self.comments):
-            print(x,data)
-            if id == data["comment_id"] and userId == data["user_id"] and taskId == data["task_id"]:
-                print(data["comment_id"] )
-                # print(self.comments.data[id])
-                self.comments.pop(x)
-                
-                
-        return None
+    async def delete_comment(self, id:int, taskId:int, user_ID:int):
+        # for x,data in enumerate(self.comments):
+        #     print(x,data)
+        #     if id == data["comment_id"] and user_id == data["user_id"] and taskId == data["task_id"]:
+        #         print(data["comment_id"] )
+        #         # print(self.comments.data[id])
+        #         self.comments.pop(x)        
+        # return None
+        comment_collection = db["comment"]
+        comment = await comment_collection.find_one({"_id": ObjectId(id)})
+        print(comment)
+        temp = []
+
+        print(role)
+        print(comment["user_id"])
+        print(type(task["user_id"]), type(int(user_ID)))
+        
+        if  comment:   
+            if  comment["user_id"] != int(user_ID):
+                print("check")
+                raise HTTPException(detail="you are not authorized to delete this Task", status_code=403)
+            else:
+                await comment_collection.delete_one({"_id": ObjectId(id)})
+                if comment:
+                    comment["_id"] = str(comment["_id"])
+                return comment
+        else:
+                raise HTTPException(detail="Task not found", status_code=403)
     
     def update_comment(self,id:int, data:Update_comment):
         is_found = False

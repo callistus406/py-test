@@ -76,3 +76,11 @@ comment= {
 #  hashlib => bcrypt
 
 # add validate token for endpoints, add response body for other endpoints - task, comments, response
+
+#threading
+<!-- types of databases : 
+-relational database - makes use of rows and columns, oyu have a database that relates to another table, e.g mysql, microsodt derver, postquest. Main purpose is to main integrity
+
+-nonrelational database - doesn't rely and column and rows, data is stored in document format, and can be stored in json format, e.g mongodb
+
+Relational databases organize data into strict, tabular rows and columns with predefined schemas, using SQL to link multiple tables. Non-relational databases (NoSQL) offer flexible, schema-less structures like key-value pairs or documents to handle unstructured data and scale horizontally across servers -->
