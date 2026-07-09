@@ -49,9 +49,9 @@ async def login(user: Login_DTO):
     "data":await db.login(user)}
 
 
-@app.post("/register", status_code=status.HTTP_201_CREATED)
-async def register():
-    response  = await db.create_user()
+@app.post("/register", status_code=status.HTTP_201_CREATED,response_model=ApiResponse  )
+async def register(user_data:Create_User):
+    response  = await db.create_user(user_data)
     return {"success": True,
     "message": "User Created Successfully",
     "data": response}
@@ -86,9 +86,10 @@ async def get_user_by_id(user_id: str):
 
 # ========================|| Task endpoints ||====================================
 
-@app.post("/create_task/", status_code=status.HTTP_200_OK,response_model=ApiResponse[Get_Task_Response])
-async def create_task():
-    response = await db.create_task()
+@app.post("/tasks", status_code=status.HTTP_200_OK,response_model=ApiResponse[Get_Task_Response] )
+async def create_task(data:Create_Task, user=Depends(validate_token)):
+    user_id  = user["user_id"]
+    response = await db.create_task(data, user_id)
     return  {
         "success":True,
         "message": "Request Successful",
