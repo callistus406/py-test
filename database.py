@@ -4,8 +4,9 @@ from bson import ObjectId
 from typing import List, Dict, Any
 from datetime import datetime,timezone,timedelta
 from fastapi import HTTPException,status
-from models import Update_task,Update_comment,Filter_Task,Create_Task,Create_comment,Login_DTO,Login_Response,UserRole,ApiResponse
+from models import Update_task,Update_comment,Filter_Task,Create_Task,Create_comment,Login_DTO,Login_Response,UserRole,ApiResponse,Create_User
 from jose import jwt
+
 from typing  import Optional
 from fastapi.responses import JSONResponse
 from pymongo import AsyncMongoClient
@@ -14,10 +15,8 @@ SECRET = "ertyuiojhgvbnm"
 ALGO = "HS256" 
 
 # database info
-MONGO_URL = "mongodb://localhost:27017/task_manger"
+MONGO_URL = "mongodb+srv://mack:m6aDKKEFNNVvi5uR@cluster0.kb8caz5.mongodb.net/?appName=Cluster0/task_manger"
 DATABASE = "task_manger"
-
-
 client = None
 db = None
 
@@ -44,11 +43,6 @@ async def close_mongo_connection():
             client.close()
     except Exception as e:
         print(e)
-
-
-
-
-
 
 # collections
 
@@ -91,7 +85,6 @@ class Database:
         self.tasks: List[Dict[str, Any]] = []
         self.comments: List[Dict[str, Any]] = []
         self.create_static_users()
-        self.initialize_tasks()
         self.initialize_comment()
 
     def genId(self, lastId: int):
@@ -137,54 +130,30 @@ class Database:
         for user in users:
             self.user.append(user)
 
-    async def create_user(self):
-        # data = user.model_dump()
-        #    find the last user in the db
-        last_id = None
-        if len(self.user) == 0:
-            last_id = 1
-        else:
-            last_user = self.user[-1]
-            last_id = self.genId(last_user["id"])
+    async def create_user(self,user_data: Create_User):
             user_collection = db["users"]
+
+            # check if account exists
+            user = await user_collection.find_one({
+                "email": user_data.email
+            })
+
+            if user is not None:
+                raise HTTPException(detail="You can't use this email. Please try another email", status_code=409)
+            
+
             password =  hash_password("password")
-            result = await user_collection.insert_many([
-            {
-                "id": 1,
-                "user_name": "Kelly",
-                "email": "key@gmail.com",
-                "name": "kelly joe",
-                "is_active": True,
-                "password": hash_password("password"),
-                "role": "user",
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat(),
-            },
-            {
-                "id": 2,
-                "user_name": "kenneth",
-                "email": "kenet@gmail.com",
-                "name": "kennet bully",
-                "is_active": True,
-                "password": hash_password("password"),
-                "role": "user",
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat(),
-            },
-            {
-                "id": 3,
-                "user_name": "hailey",
-                "email": "hailey@gmail.com",
-                "name": "hailey kent",
-                "is_active": True,
-                "password": hash_password("password"),
-                "role": "Admin",
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat(),
-            },
-        ])
+            result = await user_collection.insert_one({
+                "user_name": user_data.user_name,
+                "name": user_data.name,
+                "password": password,
+                "email": user_data.email,
+                "role": UserRole.USER
+            })
+            return None
+
         
-        print("result")
+        
 
         
 
@@ -193,32 +162,27 @@ class Database:
         user_ = None
         # find the user
         user_collection = db["users"]
-        users = await user_collection.find({}).to_list(length=None)
-        for user in users:
-            result = user["email"].lower().strip() == data.email.lower().strip()
 
-            if result:
-                user_ = user
-
-        if user_ == None:
+        user_ = await user_collection.find_one({
+            "email": data.email
+        })
+        if user_ is None:
             raise HTTPException(detail="Invalid Credential", status_code=401)
+            
         
         if validate_password(user_["password"], data.password) is  not True:
               raise HTTPException(detail="Invalid username or Password",status_code=401)
         print("check")
         # generate jwt token
-        token = generate_jwt({"sub":str(user_["id"]),  "role": user_["role"] })
+        token = generate_jwt({"sub":str(user_["_id"]),  "role": user_["role"] })
         
         return Login_Response(
-            userId=user_["id"],
+            userId=str(user_["_id"]),
             email=user_["email"],
             token=token,
             name=user_["name"],
             role = user_["role"]
         )
-        
-   
-    
 
     async def get_users(self):
         user_collection = db["users"]
@@ -265,165 +229,31 @@ class Database:
         return user
        
           
+    async def create_task(self,task: Create_Task,user_id:str ):
+        task_collection = db["task"]
 
+        # check if task exists
+        is_found = await task_collection.find_one({
+            "title": task.title
+        })
+        
+        if is_found is not None:
+            raise HTTPException(detail="Duplicate detected", status_code=409)
 
-
-
-    # tasks
-
-    def initialize_tasks(self):
-# data_main[0]["title"]
-        data_main = [
-            {
-                "title": "Build login API",
-                "description": "Develop and test authentication endpoints",
-                "status": "active",
-                "priority": "high",
-                "start_date": "2026-04-01",
-                "end_date": "2026-04-07",
-                "user_id": 1,
-                "created_by": 1,
-                "updated_by": 2,
+        payload = {
+                "title": task.title,
+                "description": task.description,
+                "status": task.status,
+                "priority": task.priority,
+                "start_date": task.start_date,
+                "end_date": task.end_date,
+                "user_id": ObjectId(user_id),
                 "completed_at": None,
-                "id": 1,
-                "created_at": datetime.now().isoformat(), 
-                "updated_at": datetime.now().isoformat(),
-            },
-            {
-                "title": "Design database schema",
-                "description": "Create ER diagram and define relationships",
-                "status": "completed",
-                "priority": "high",
-                "start_date": "2026-03-20",
-                "end_date": "2026-03-25",
-                "user_id": 2,
-                "created_by": 1,
-                "updated_by": 2,
-                "completed_at": "2026-03-25",
-                "id": 2,
                 "created_at": datetime.now().isoformat(),
                 "updated_at": datetime.now().isoformat(),
-            },
-            {
-                "title": "Write unit tests",
-                "description": "Add tests for service layer functions",
-                "status": "pending",
-                "priority": "medium",
-                "start_date": "2026-04-10",
-                "end_date": "2026-04-15",
-                "user_id": 3,
-                "created_by": 2,
-                "updated_by": 2,
-                "completed_at": None,
-                "id": 3,
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat(),
-            },
-            {
-                "title": "Frontend UI updates",
-                "description": "Improve dashboard layout and responsiveness",
-                "status": "active",
-                "priority": "medium",
-                "start_date": "2026-04-02",
-                "end_date": "2026-04-12",
-                "user_id": 4,
-                "created_by": 3,
-                "updated_by": 4,
-                "completed_at": None,
-                "id": 4,
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat(),
-            },
-            {
-                "title": "Deploy to production",
-                "description": "Push latest release and monitor logs",
-                "status": "pending",
-                "priority": "low",
-                "start_date": "2026-04-20",
-                "end_date": "2026-04-21",
-                "user_id": 5,
-                "created_by": 1,
-                "updated_by": 1,
-                "completed_at": None,
-                "id": 5,
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat(),
-            },
-            
-        ]
-
-        for task in data_main:
-            self.tasks.append(task)
-
-    async def create_task(self):
-        if len(self.tasks) ==0:
-            last_id = 1
-        else:
-            last_task = self.tasks[-1]
-            last_id = self.genId(last_task["id"])
-            task_collection = db["task"]
-            result =  await task_collection.insert_many([{
-                "title": "Build login API",
-                "description": "Develop and test authentication endpoints",
-                "status": "active",
-                "priority": "high",
-                "start_date": "2026-04-01",
-                "end_date": "2026-04-07",
-                "user_id": 1,
-                "created_by": 1,
-                "updated_by": 2,
-                "completed_at": None,
-                "id": 1,
-                "created_at": datetime.now().isoformat(), 
-                "updated_at": datetime.now().isoformat(),
-            },
-            {
-                "title": "Design database schema",
-                "description": "Create ER diagram and define relationships",
-                "status": "completed",
-                "priority": "high",
-                "start_date": "2026-03-20",
-                "end_date": "2026-03-25",
-                "user_id": 2,
-                "created_by": 1,
-                "updated_by": 2,
-                "completed_at": "2026-03-25",
-                "id": 2,
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat(),
-            },
-            {
-                "title": "Write unit tests",
-                "description": "Add tests for service layer functions",
-                "status": "pending",
-                "priority": "medium",
-                "start_date": "2026-04-10",
-                "end_date": "2026-04-15",
-                "user_id": 3,
-                "created_by": 2,
-                "updated_by": 2,
-                "completed_at": None,
-                "id": 3,
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat(),
-            },
-            {
-                "title": "Frontend UI updates",
-                "description": "Improve dashboard layout and responsiveness",
-                "status": "active",
-                "priority": "medium",
-                "start_date": "2026-04-02",
-                "end_date": "2026-04-12",
-                "user_id": 4,
-                "created_by": 3,
-                "updated_by": 4,
-                "completed_at": None,
-                "id": 4,
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat(),
-            }])
-            
-        print(result)
+        }
+        result =  await task_collection.insert_one(payload)
+        return None
 
         
   
