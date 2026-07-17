@@ -1,7 +1,7 @@
 
 from fastapi import FastAPI, Request, Query, status, HTTPException,Body,Depends
 import json
-from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply, Create_Task, Create_comment,Login_DTO,Login_Response,UserRole, ApiResponse,Get_Task_Response
+from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply,Update_User, Create_Task, Create_comment,Login_DTO,Login_Response,UserRole, ApiResponse,Get_Task_Response,UserResponse
 import database
 from typing  import Optional,Dict, TypeVar
 from fastapi.responses import JSONResponse
@@ -45,11 +45,11 @@ async def http_exception_handler(request:Request,exc:HTTPException):
 async def login(user: Login_DTO):
     
     return {"success": True,
-    "message": "All users retrieved successfully",
+    "message": "User retrieved successfully",
     "data":await db.login(user)}
 
 
-@app.post("/register", status_code=status.HTTP_201_CREATED,response_model=ApiResponse  )
+@app.post("/register", status_code=status.HTTP_201_CREATED,response_model=ApiResponse[UserResponse]  )
 async def register(user_data:Create_User):
     response  = await db.create_user(user_data)
     return {"success": True,
@@ -59,10 +59,8 @@ async def register(user_data:Create_User):
 
 # ========================|| User endpoints ||====================================
 
-@app.get("/users", status_code=status.HTTP_200_OK,response_model=ApiResponse)
-# def getUsers(user=Depends(require_role([UserRole.ADMIN]))):
-async def getUsers():
-    # print(user)
+@app.get("/users", status_code=status.HTTP_200_OK,response_model=ApiResponse[UserResponse])
+async def getUsers(user=Depends(require_role([UserRole.ADMIN]))):
     response = await db.get_users()
     return {  
         "success":True,
@@ -76,6 +74,19 @@ async def get_user_by_id(user_id: str):
         "success":True,
         "message": "Successfully Fetched User",
         "data": await db.get_user(user_id)}
+
+
+
+@app.put("/users", status_code=status.HTTP_200_OK,response_model=ApiResponse)
+async def update_user(body:Update_User, user=Depends(validate_token)):
+    user_id = user["user_id"]
+    response= await  db.update_user( body, user_id)
+    return  {
+        "success":True,
+        "message": "Request Successful - fetched task by ID",
+        "data": response
+    }
+
 
 @app.delete("/users/{user_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse)
 async def get_user_by_id(user_id: str):
@@ -136,56 +147,56 @@ async def get_task(task_id: str):
     }
 
 
-@app.put("/tasks/{task_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse)
-async def update_task(task_id,body:Update_task,user=Depends(require_role([UserRole.USER,UserRole.ADMIN]))):
+@app.put("/tasks/{task_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse[Get_Task_Response])
+async def update_task(task_id: str,body:Update_task,user=Depends(require_role([UserRole.USER,UserRole.ADMIN]))):
 
     role = user["role"]  
     user_id = user["user_id"]
-    response= await  db.update_task_(int(task_id), body, role, user_id)
+    response= await  db.update_task_(task_id, body, role, user_id)
     return  {
         "success":True,
-        "message": "Request Successful - fetched task by ID",
+        "message": "Request Successful - task updated",
         "data": response
     }
 
 # ========================|| Comment endpoints ||====================================
 
 @app.get("/comments", status_code=status.HTTP_200_OK,response_model=ApiResponse)
-def get_all_comment():
+async def get_all_comment():
     return {
         "success":True,
         "message": "Request Successful Retrieved All Comments",
-        "data": db.get_all_comment()}
+        "data": await db.get_all_comment()}
 
-@app.post("/create_commment", status_code = status.HTTP_200_OK,response_model=ApiResponse)
-async def create_comment(data:Create_comment,user=Depends(require_role([UserRole.USER,UserRole.ADMIN]))):
+@app.post("/comments/{task_id}", status_code = status.HTTP_200_OK,response_model=ApiResponse)
+async def create_comment(data:Create_comment,task_id: str,user= Depends(validate_token)):
     user_id = user["user_id"]
     return{
         "success":True,
         "message": "Request Successful Created a Comment",
-        "data": await db.create_comment(data)}
+        "data": await db.create_comment(data, user_id, task_id)}
 
 @app.get("/comments/{comment_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse)
-async def get_comment(comment_id):
+async def get_comment(comment_id:str):
     return {
         "success":True,
         "message": "Request Successful Fetched Comment by ID",
-        "data":await  db.get_comment(int(comment_id))}
+        "data":await  db.get_comment(comment_id)}
 
 @app.delete("/comments/{comment_id}/x{task_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse)
-def delete_comment(comment_id,user_id,task_id, user= Depends(validate_token)):
+def delete_comment(comment_id: str,  user=Depends(require_role([UserRole.USER,UserRole.ADMIN]))):
    user_id = user["user_id"]
+   role = user["role"]
    return {
         "success":True,
         "message": "Request Successful Deleted Comment by ID",
-       "data": db.delete_comment(int(comment_id),int(user_id),int(task_id))}
+       "data": db.delete_comment(comment_id,user_id,task_id,role)}
 
-@app.put("/comments/{comment_id}/{reply_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse)
-def update_reply(comment_id, reply_id , body:Dict, user=Depends(require_role([UserRole.USER,UserRole.ADMIN]) )):
+@app.put("/comments/{comment_id}/x{task_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse)
+def update_reply(comment_id:str , body:Dict,  user=Depends(validate_token) ):
      user_id = user["user_id"]
-     role = user["role"]
      return {
         "success":True,
         "message": "Request Successful - Updated Comment",
-        "data": db.update_reply(int(comment_id), int(reply_id), body, user_id, role)}
+        "data": db.update_reply(comment_id, body, user_id, )}
 
