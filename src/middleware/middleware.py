@@ -1,10 +1,10 @@
 from fastapi.security import OAuth2PasswordBearer
 
 from jose import jwt
-from database import SECRET,ALGO
-from fastapi import HTTPException,status,Depends
+from model.database import SECRET,ALGO
+from fastapi import HTTPException,status,Depends,Request
 from typing import List
-from models import UserRole
+from schema.schema import UserRole
 
 extract_token = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -42,6 +42,8 @@ def require_role(roles:List[str]):
             return current_user
     
     return confirm_role
+
+
 
 
 

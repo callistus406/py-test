@@ -1,30 +1,50 @@
 
 from fastapi import FastAPI, Request, Query, status, HTTPException,Body,Depends
 import json
-from models import Create_User, Filter_Task,Update_task, Update_comment,Update_reply,Update_User, Create_Task, Create_comment,Login_DTO,Login_Response,UserRole, ApiResponse,Get_Task_Response,UserResponse
-import database
+from schema.schema import Create_User, Filter_Task,Update_task, Update_comment,Update_reply,Update_User, Create_Task, Create_comment,Login_DTO,Login_Response,UserRole, ApiResponse,Get_Task_Response,UserResponse
+import model.database as database
 from typing  import Optional,Dict, TypeVar
 from fastapi.responses import JSONResponse
 import logging
-from middleware import validate_token,validate_admin,require_role
+from utils import logging
+import time
+from middleware.middleware import validate_token,validate_admin,require_role
 
 app = FastAPI()
 
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    try:
+        logging.logger.info(f"RequestID: {int(time.time())} - HOST:{request.client.host} - URL: {request.url}")
+        response = await call_next(request)
+        return response
+    except Exception as e:
+        logging.logger.error(e)
+
+
+# @app.middleware("http")
+# async def log_request(request:Request,call_next):
+#     print("req")
+
 db = database.Database()
-
-
-
-
-# connet db
 
 @app.on_event("startup")
 async def startup_event():
     await database.connect_mongo()
 
+
+
+
+
+
 # @app.on_event("shortdown")
 # async def startup_event():
 #    await  database.close_mongo_connection()
    
+
+
+
 
 #does this exception handle all task endpoint failure?
 @app.exception_handler(HTTPException)
@@ -39,6 +59,7 @@ async def http_exception_handler(request:Request,exc:HTTPException):
         }
     )
 
+    
 # ========================|| Authentication endpoints ||====================================
 
 @app.post("/login", response_model=ApiResponse[Login_Response],status_code=status.HTTP_200_OK )
@@ -118,10 +139,6 @@ async def delete_task(id:str,user=Depends(require_role([UserRole.USER,UserRole.A
         "message": "Successfully deleted field",
         "data": await db.delete_task(id, user_id,role)}
 
-
-
-
-
 # filter endpoint
 @app.get("/tasks", status_code=status.HTTP_200_OK, response_model=ApiResponse[Get_Task_Response])
 async def filter_tasks(
@@ -190,7 +207,7 @@ def delete_comment(comment_id: str,  user=Depends(require_role([UserRole.USER,Us
    return {
         "success":True,
         "message": "Request Successful Deleted Comment by ID",
-       "data": db.delete_comment(comment_id,user_id,task_id,role)}
+       "data": db.delete_comment(comment_id,user_id,role)}
 
 @app.put("/comments/{comment_id}/x{task_id}", status_code=status.HTTP_200_OK,response_model=ApiResponse)
 def update_reply(comment_id:str , body:Dict,  user=Depends(validate_token) ):

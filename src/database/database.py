@@ -1,27 +1,28 @@
-import models
+import src.schema.schema as schema
 import bcrypt
 from bson import ObjectId
 from typing import List, Dict, Any
 from datetime import datetime,timezone,timedelta
 from fastapi import HTTPException,status
-from models import Update_task,Update_comment,Filter_Task,Create_Task,Create_comment,Login_DTO,Login_Response,UserRole,ApiResponse,Create_User,Update_User
+from src.schema.schema import Update_task,Update_comment,Filter_Task,Create_Task,Create_comment,Login_DTO,Login_Response,UserRole,ApiResponse,Create_User,Update_User
 from jose import jwt
+from dotenv import load_dotenv
+import os
 
 from typing  import Optional
 from fastapi.responses import JSONResponse
 from pymongo import AsyncMongoClient
-from utils import logger
-SECRET = "ertyuiojhgvbnm"
-ALGO = "HS256" 
+from utils import logging
 
+load_dotenv()
 # database info
-MONGO_URL = "mongodb+srv://neme_python:test123@info-3139.fvv8kuz.mongodb.net/?appName=INFO-3139/task_manger"
+MONGO_URL= os.getenv("MONGO_URL")
+SECRET = os.getenv("JWT_SECRET")
+ALGO = os.getenv("JWT_ALGO") 
 
 DATABASE = "task_manger"
 client = None
 db = None
-
-
 
 async def connect_mongo():
     try:
@@ -30,12 +31,11 @@ async def connect_mongo():
         db = client[DATABASE]
         await client.admin.command("ping")
     
-        logger.info( "Database Connected successfully")
+        logging.logger.info( "Database Connected successfully")
         # await client.close()
     except Exception as e:
         raise Exception(
             "The following error occurred: ", e)
-
 
 async def close_mongo_connection():
     
@@ -81,56 +81,6 @@ def generate_jwt(data:Dict, exp:int = 30):
 
 
 class Database:
-    def __init__(self):
-        self.user: List[Dict[str, Any]] = []
-        self.tasks: List[Dict[str, Any]] = []
-        self.comments: List[Dict[str, Any]] = []
-        self.create_static_users()
-        self.initialize_comment()
-
-    def genId(self, lastId: int):
-        return lastId + 1
-
-    def create_static_users(self):
-        users = [
-            {
-                "id": 1,
-                "user_name": "Kelly",
-                "email": "key@gmail.com",
-                "name": "kelly joe",
-                "is_active": True,
-                "password": hash_password("password"),
-                "role": "user",
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat(),
-            },
-            {
-                "id": 2,
-                "user_name": "kenneth",
-                "email": "kenet@gmail.com",
-                "name": "kennet bully",
-                "is_active": True,
-                "password": hash_password("password"),
-                "role": "user",
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat(),
-            },
-            {
-                "id": 3,
-                "user_name": "hailey",
-                "email": "hailey@gmail.com",
-                "name": "hailey kent",
-                "is_active": True,
-                "password": hash_password("password"),
-                "role": "Admin",
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat(),
-            },
-        ]
-
-        for user in users:
-            self.user.append(user)
-
     async def create_user(self,user_data: Create_User):
             user_collection = db["users"]
 
@@ -161,9 +111,6 @@ class Database:
             return None
 
         
-        
-
-        
 
     async def  login(self,data: Login_DTO):
         token = None
@@ -180,8 +127,6 @@ class Database:
         
         if validate_password(user_["password"], data.password) is  not True:
               raise HTTPException(detail="Invalid username or Password",status_code=401)
-        print("check")
-        # generate jwt token
         token = generate_jwt({"sub":str(user_["_id"]),  "role": user_["role"] })
         
         return Login_Response(
@@ -191,6 +136,7 @@ class Database:
             name=user_["name"],
             role = user_["role"]
         )
+    
 
     async def get_users(self):
         user_collection = db["users"]
@@ -324,10 +270,8 @@ class Database:
         
 
     async def delete_task(self, id: str,user_ID:str, role:str):
-        print("check")
         task_collection = db["task"]
         task = await task_collection.find_one({"_id": ObjectId(id)})
-        print(task)
         
         if  task:   
             if  task["user_id"] != (user_ID) and role != UserRole.ADMIN.value:
@@ -392,185 +336,7 @@ class Database:
                 status_code=409
             )
  
-    def initialize_comment(self):
-    
-        # Sample datasets for Create_comment
-        SAMPLE_COMMENTS: List[dict] = [
 
-       
-        {
-            "comment_id": 2,
-            "user_id": 2,
-            "task_id":1,
-            "comment": "Found a bug in edge case handling.",
-            "create_at": datetime.now().isoformat(),
-        },
-        {
-            "comment_id": 3,
-            "user_id": 11,
-            "task_id":2,
-            "comment": "Ready for QA.",
-            "create_at": datetime.now().isoformat(),
-        },
-        {
-            "comment_id": 4,
-            "user_id": 1,
-            "task_id":3,
-            "comment": "Deployed to staging.",
-            "create_at": datetime.now().isoformat(),
-        },
-        {
-            "comment_id": 5,
-            "user_id": 1,
-            "task_id":3,
-            "comment": "Needs performance benchmarking.",
-            "create_at": datetime.now().isoformat(),
-        },
-        {
-            "comment_id": 6,
-            "task_id": 1,
-            "user_id": 2,
-            "comment": "this is from the admin",
-            "created_at": "2026-05-17T10:00:00",
-            "replies": [
-                {
-                    "id": 1,
-                    "userId": 3,
-                    "content": "this is a reply from the user",
-                    "created_at": "2026-05-17T10:01:00"
-                }
-            ]
-        },
-        {
-            "comment_id": 7,
-            "task_id": 1,
-            "user_id": 4,
-            "comment": "please review the task updates",
-            "created_at": "2026-05-17T10:02:00",
-            "replies": [
-                {
-                    "id": 1,
-                    "userId": 5,
-                    "content": "looks good to me",
-                    "created_at": "2026-05-17T10:03:00"
-                },
-                {
-                    "id": 2,
-                    "userId": 6,
-                    "content": "approved",
-                    "created_at": "2026-05-17T10:04:00"
-                }
-            ]
-        },
-        {
-            "comment_id": 8,
-            "task_id": 2,
-            "user_id": 7,
-            "comment": "can someone check this task?",
-            "created_at": "2026-05-17T10:05:00",
-            "replies": []
-        },
-        {
-            "comment_id": 9,
-            "task_id": 2,
-            "user_id": 8,
-            "comment": "UI needs improvement",
-            "created_at": "2026-05-17T10:06:00",
-            "replies": [
-                {
-                    "id": 1,
-                    "userId": 9,
-                    "content": "agree, spacing is off",
-                    "created_at": "2026-05-17T10:07:00"
-                }
-            ]
-        },
-        {
-            "comment_id": 10,
-            "task_id": 3,
-            "user_id": 1,
-            "comment": "deployment is ready",
-            "created_at": "2026-05-17T10:08:00",
-            "replies": [
-                {
-                    "id": 1,
-                    "userId": 2,
-                    "content": "tested on staging, all good",
-                    "created_at": "2026-05-17T10:09:00"
-                }
-            ]
-        },
-        {
-            "comment_id": 11,
-            "task_id": 3,
-            "user_id": 3,
-            "content": "database migration completed",
-            "created_at": "2026-05-17T10:10:00",
-            "replies": []
-        },
-        {
-            "comment_id": 12,
-            "task_id": 4,
-            "user_id": 5,
-            "comment": "API response is slow",
-            "created_at": "2026-05-17T10:11:00",
-            "replies": [
-                {
-                    "id": 1,
-                    "user": 6,
-                    "content": "we should optimize queries",
-                    "created_at": "2026-05-17T10:12:00"
-                },
-                {
-                    "id": 2,
-                    "userId": 7,
-                    "content": "adding index might help",
-                    "created_at": "2026-05-17T10:13:00"
-                }
-            ]
-        },
-        {
-            "comment_id": 13,
-            "task_id": 4,
-            "user_id": 8,
-            "comment": "authentication bug found",
-            "created_at": "2026-05-17T10:14:00",
-            "replies": [
-                {
-                    "id": 1,
-                    "userId": 9,
-                    "content": "I can reproduce it",
-                    "created_at": "2026-05-17T10:15:00"
-                }
-            ]
-        },
-        {
-            "comment_id": 14,
-            "task_id": 3,
-            "user_id": 3,
-            "comment": "need clarification on requirements",
-            "created_at": "2026-05-17T10:16:00",
-            "replies": []
-        },
-        {
-            "comment_id": 15,
-            "task_id": 3,
-            "user_id": 10,
-            "comment": "final review completed",
-            "created_at": "2026-05-17T10:17:00",
-            "replies": [
-                {
-                    "id": 1,
-                    "userId": 1,
-                    "content": "great work everyone",
-                    "created_at": "2026-05-17T10:18:00"
-                }
-            ]
-        }
-    ]
-    
-        for x in SAMPLE_COMMENTS:
-            self.comments.append(x)
 
 
     async def create_comment(self, data:Create_comment, usersId:str, taskId:str):
@@ -617,24 +383,13 @@ class Database:
         return comment
     
     # async def update_reply(self, id:int, reply_id :int, data: Dict) :    
-      
-   
-              
-          
+       
 
     async def delete_comment(self, id:str, user_ID:str, role:str):     
         comment_collection = db["comments"]
         comments = await comment_collection.find_one({"_id": ObjectId(id)})
-        print(comments)
-        temp = []
-
-        print(role)
-        print(comments["user_id"])
-        
-        
         if  comments:   
             if  comments["user_id"] != (user_ID) and role != UserRole.ADMIN:
-                print("check")
                 raise HTTPException(detail="you are not authorized to delete this Task", status_code=403)
             else:
                 await comment_collection.delete_one({"_id": ObjectId(id)})
@@ -676,10 +431,3 @@ class Database:
                 detail="Comment not found",
                 status_code=409
             )
-
-    #  def createComment()   
-
-#comment should just be restricted to the owner fo the comment, same applies to deleting
-
-
-
