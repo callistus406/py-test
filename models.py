@@ -22,6 +22,7 @@ class UserResponse(BaseModel):
     email: str
     name: str
     role: str
+    
 
 class Login_Response(BaseModel):
     user_id:Optional [str]= None
@@ -79,9 +80,10 @@ class Create_User(UserBase):
     password: str= Field(...,min_length=8)
 
 class Update_User(BaseModel):
-    username: str = Field(None, min_length=3, max_length=50, description="The username of the user", )#validat username
+    user_name: str = Field(None, min_length=3, max_length=50, description="The username of the user", )#validat username
     email: str = Field(None,description="The email of the user",) #todo validate email
     name: str = Field(None, min_length=3, max_length=50, description="The username of the user")
+    role:str
 
 
 
@@ -101,8 +103,12 @@ class Filter_Task(BaseModel):
     end_date:Optional [str]  = None
 
 class Create_comment(BaseModel):
-    user_id: int
-    task_id: int
+
+    comment: str = Field(...,max_length = 800)
+    replies:  Optional[list[Reply]] = []
+
+
+class Reply(BaseModel):
     comment: str = Field(...,max_length = 800)
 
 
