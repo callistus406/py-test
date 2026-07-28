@@ -10,6 +10,7 @@ from utils import logging
 import time
 from middleware.middleware import validate_token,validate_admin,require_role
 from utils.token_blacklist import BlacklistToken
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
@@ -45,6 +46,7 @@ async def startup_event():
 
 
 
+
 #does this exception handle all task endpoint failure?
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request:Request,exc:HTTPException):
@@ -57,6 +59,19 @@ async def http_exception_handler(request:Request,exc:HTTPException):
             "data": []
         }
     )
+# origins = [
+#     "http://localhost.tiangolo.com",
+#     "https://localhost.tiangolo.com",
+#     "http://localhost",
+#     "http://localhost:8080",
+# ]
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["GET", "POST","PATCH"],
+#     allow_headers=["*"],
+# )
 
     
 # ========================|| Authentication endpoints ||====================================
@@ -66,7 +81,7 @@ async def login(user: Login_DTO):
     
     return {"success": True,
     "message": "User retrieved successfully",
-    "data":await db.login(user)}
+    "data": await db.login(user)}
 
 
 @app.post("/register", status_code=status.HTTP_201_CREATED,response_model=ApiResponse[UserResponse]  )
@@ -216,16 +231,28 @@ def update_reply(comment_id:str , body:Dict,  user=Depends(validate_token) ):
         "message": "Request Successful - Updated Comment",
         "data": db.update_reply(comment_id, body, user_id, )}
 
-@app.post("/logout", status_code=status.HTTP_200_OK,response_model=ApiResponse)
-def update_reply(  user=Depends(validate_token) ):
 
-     blacklist = BlacklistToken()
-     blacklist.add_token(user["token"])
-     print(user["token"], "opioioi")
+@app.get("/health", status_code=status.HTTP_200_OK,response_model=ApiResponse)
+def update_reply(  ):
+
      return {
         "success":True,
-        "message": "Logout successful",
-        "data": None}
+        "message": "Server is Up",
+        "data": None
+        }
+
+
+
+# @app.post("/logout", status_code=status.HTTP_200_OK,response_model=ApiResponse)
+# def update_reply(  user=Depends(validate_token) ):
+
+#      blacklist = BlacklistToken()
+#      blacklist.add_token(user["token"])
+#      print(user["token"], "opioioi")
+#      return {
+#         "success":True,
+#         "message": "Logout successful",
+#         "data": None}
 
 
 

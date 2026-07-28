@@ -76,11 +76,16 @@ def generate_jwt(data:Dict, exp:int = 30):
         exp:conv_time
     })
     # ?generate token
-    return jwt.encode(
+    token = jwt.encode(
         data,
         SECRET,
         algorithm=ALGO
     )
+    print(  data,
+            SECRET,
+            algorithm=ALGO)
+    print(token)
+    return token
 
 
 
@@ -121,7 +126,6 @@ class Database:
         user_ = None
         # find the user
         user_collection = db["users"]
-
         user_ = await user_collection.find_one({
             "email": data.email
         })
@@ -131,7 +135,7 @@ class Database:
         
         if validate_password(user_["password"], data.password) is  not True:
               raise HTTPException(detail="Invalid username or Password",status_code=401)
-        token = generate_jwt({"sub":str(user_["_id"]),  "role": user_["role"] })
+        token = generate_jwt({"sub":str(user_["_id"]), "user":"wertyuio", "role": user_["role"] })
         
         return Login_Response(
             userId=str(user_["_id"]),
