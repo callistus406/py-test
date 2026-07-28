@@ -5,6 +5,7 @@ from model.database import SECRET,ALGO
 from fastapi import HTTPException,status,Depends,Request
 from typing import List
 from schema.schema import UserRole
+from utils.token_blacklist import BlacklistToken
 
 extract_token = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -14,15 +15,18 @@ def validate_token(token:str=Depends(extract_token)):
         payload = jwt.decode(token=token,key=SECRET,algorithms=[ALGO])
         user_id  = payload["sub"]
         role = payload["role"]
+        blacklist = BlacklistToken()
+        print(token, "middleware")
+        print(blacklist.is_blacklisted(token))
+        if blacklist.is_blacklisted(token):
+            raise HTTPException(detail="",status_code=403)
         if user_id is None:
             raise HTTPException(detail="Invalid token",status_code=401) 
-        print({
-            "user_id": user_id,
-            "role": role
-        })
+
         return{
             "user_id": user_id,
-            "role": role
+            "role": role,
+            "token": token
         }
     except Exception as e:
         print(e)
