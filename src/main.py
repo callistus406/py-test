@@ -9,6 +9,7 @@ import logging
 from utils import logging
 import time
 from middleware.middleware import validate_token,validate_admin,require_role
+from utils.token_blacklist import BlacklistToken
 
 app = FastAPI()
 
@@ -16,7 +17,9 @@ app = FastAPI()
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     try:
+        print(str(request.url).split("/")[-1])
         logging.logger.info(f"RequestID: {int(time.time())} - HOST:{request.client.host} - URL: {request.url}")
+
         response = await call_next(request)
         return response
     except Exception as e:
@@ -32,10 +35,6 @@ db = database.Database()
 @app.on_event("startup")
 async def startup_event():
     await database.connect_mongo()
-
-
-
-
 
 
 # @app.on_event("shortdown")
@@ -216,4 +215,17 @@ def update_reply(comment_id:str , body:Dict,  user=Depends(validate_token) ):
         "success":True,
         "message": "Request Successful - Updated Comment",
         "data": db.update_reply(comment_id, body, user_id, )}
+
+@app.post("/logout", status_code=status.HTTP_200_OK,response_model=ApiResponse)
+def update_reply(  user=Depends(validate_token) ):
+
+     blacklist = BlacklistToken()
+     blacklist.add_token(user["token"])
+     print(user["token"], "opioioi")
+     return {
+        "success":True,
+        "message": "Logout successful",
+        "data": None}
+
+
 
