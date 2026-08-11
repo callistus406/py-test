@@ -25,6 +25,7 @@ async def add_process_time_header(request: Request, call_next):
         return response
     except Exception as e:
         logging.logger.error(e)
+        raise
 
 
 # @app.middleware("http")
@@ -59,19 +60,17 @@ async def http_exception_handler(request:Request,exc:HTTPException):
             "data": []
         }
     )
-# origins = [
-#     "http://localhost.tiangolo.com",
-#     "https://localhost.tiangolo.com",
-#     "http://localhost",
-#     "http://localhost:8080",
-# ]
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=origins,
-#     allow_credentials=True,
-#     allow_methods=["GET", "POST","PATCH"],
-#     allow_headers=["*"],
-# )
+origins = [
+    "http://fast.tiangolo.com",
+
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=[ "POST","PATCH"],
+    allow_headers=["*"],
+)
 
     
 # ========================|| Authentication endpoints ||====================================

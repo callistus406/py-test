@@ -68,24 +68,20 @@ def validate_password(hashed_password:str,password:str):
     else:
         return False
 
-def generate_jwt(data:Dict, exp:int = 30):
+def generate_jwt(data: Dict, expires_in_minutes: int = 30) -> str:
+    now = datetime.now(timezone.utc)
     to_encode = data.copy()
-    conv_time = datetime.now(timezone.utc) + timedelta(minutes=exp)
 
     to_encode.update({
-        exp:conv_time
+        "iat": now,
+        "exp": now + timedelta(minutes=expires_in_minutes),
     })
-    # ?generate token
-    token = jwt.encode(
-        data,
+
+    return jwt.encode(
+        to_encode,
         SECRET,
         algorithm=ALGO
     )
-    print(  data,
-            SECRET,
-            algorithm=ALGO)
-    print(token)
-    return token
 
 
 
