@@ -84,3 +84,49 @@ comment= {
 -nonrelational database - doesn't rely and column and rows, data is stored in document format, and can be stored in json format, e.g mongodb
 
 Relational databases organize data into strict, tabular rows and columns with predefined schemas, using SQL to link multiple tables. Non-relational databases (NoSQL) offer flexible, schema-less structures like key-value pairs or documents to handle unstructured data and scale horizontally across servers -->
+
+
+<!-- MONGO_URL = "mongodb+srv://neme_python:test123@info-3139.fvv8kuz.mongodb.net/?appName=INFO-3139/task_manger"
+DATABASE = "task_manger" -->
+
+
+
+
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTUxMmM0NDU5ZGYzZjY0NjIzNWJkMzUiLCJyb2xlIjoiQWRtaW4ifQ.cqVOrjOu1XHQGgkvMX8olF2XS6YlMNoez667xp3Me_o"
+
+Things to put in to consideration when building an Authentication System
+-access token
+-refresh token
+
+topic of the day-how to blacklist token - 28/07/26 
+any yoken voided will not be passed through the authentication middleware - this will be performed using redis - this is a temp database to store data wehardly access
+
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTUxMmM0NDU5ZGYzZjY0NjIzNWJkMzUiLCJyb2xlIjoidXNlciJ9.-T3zy7yS-ulhLELvIqXO-jd3AfKGcjuMYcHZzWjc7XI
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTUxMmM0NDU5ZGYzZjY0NjIzNWJkMzUiLCJyb2xlIjoidXNlciJ9.-T3zy7yS-ulhLELvIqXO-jd3AfKGcjuMYcHZzWjc7XI
+
+note
+docker : you can package, deploy your application, so you can run on any platform without any compatability issue
+
+Virtual Machine - running a full guest Operating systen on a hypervisor hardware
+
+you can create different docker image to apply different versions, and port number but will have the same codebase and framework
+
+-Volumes - essential for persistent storage on our host operating system, temp storage incase of deltetion or crashes
+
+TO CREATE AN IMAGE
+1. create a file called DockerFile vscode
+
+docker run -d 
+- foreground vs background?
+
+steps 
+build the docker  - create an image
+run docker -d create a unit that runs the image
+docker run -p 8000:8000 --name fastapi-app dastapi-server
+
+
+
+
+next class we are looking at networking in docker
