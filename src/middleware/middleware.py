@@ -16,17 +16,17 @@ def validate_token(token:str=Depends(extract_token)):
         user_id  = payload["sub"]
         role = payload["role"]
         blacklist = BlacklistToken()
-        print(token, "middleware")
-        print(blacklist.is_blacklisted(token))
-        if blacklist.is_blacklisted(token):
-            raise HTTPException(detail="",status_code=403)
+        # print(token, "middleware")
+        # print(blacklist.is_blacklisted(token))
+        # if blacklist.is_blacklisted(token):
+        #     raise HTTPException(detail="",status_code=403)
         if user_id is None:
             raise HTTPException(detail="Invalid token",status_code=401) 
 
         return{
             "user_id": user_id,
             "role": role,
-            "token": token
+            # "token": token
         }
     except Exception as e:
         print(e)

@@ -68,16 +68,17 @@ def validate_password(hashed_password:str,password:str):
     else:
         return False
 
-def generate_jwt(data:Dict, exp:int = 30):
+def generate_jwt(data: Dict, expires_in_minutes: int = 30) -> str:
+    now = datetime.now(timezone.utc)
     to_encode = data.copy()
-    conv_time = datetime.now(timezone.utc) + timedelta(minutes=exp)
 
     to_encode.update({
-        exp:conv_time
+        "iat": now,
+        "exp": now + timedelta(minutes=expires_in_minutes),
     })
-    # ?generate token
+
     return jwt.encode(
-        data,
+        to_encode,
         SECRET,
         algorithm=ALGO
     )
@@ -121,7 +122,6 @@ class Database:
         user_ = None
         # find the user
         user_collection = db["users"]
-
         user_ = await user_collection.find_one({
             "email": data.email
         })
@@ -131,7 +131,7 @@ class Database:
         
         if validate_password(user_["password"], data.password) is  not True:
               raise HTTPException(detail="Invalid username or Password",status_code=401)
-        token = generate_jwt({"sub":str(user_["_id"]),  "role": user_["role"] })
+        token = generate_jwt({"sub":str(user_["_id"]), "user":"wertyuio", "role": user_["role"] })
         
         return Login_Response(
             userId=str(user_["_id"]),
