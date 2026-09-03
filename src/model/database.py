@@ -100,11 +100,11 @@ class Database:
             user = await user_collection.find_one({
                 "user_name": user_data.user_name
             })
-
             if user is not None:
                 raise HTTPException(detail="You can't use this username. Please try another username", status_code=409)
 
             password =  hash_password("password")
+            print(password)
             result = await user_collection.insert_one({
                 "user_name": user_data.user_name,
                 "name": user_data.name,
@@ -128,10 +128,10 @@ class Database:
         if user_ is None:
             raise HTTPException(detail="Invalid Credential", status_code=401)
             
-        
+        print(user_["password"], data.password,"qwerty")
         if validate_password(user_["password"], data.password) is  not True:
               raise HTTPException(detail="Invalid username or Password",status_code=401)
-        token = generate_jwt({"sub":str(user_["_id"]), "user":"wertyuio", "role": user_["role"] })
+        token = generate_jwt({"sub":str(user_["_id"]), "user":user_["name"], "role": user_["role"] })
         
         return Login_Response(
             userId=str(user_["_id"]),
