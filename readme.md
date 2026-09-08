@@ -114,7 +114,7 @@ Virtual Machine - running a full guest Operating systen on a hypervisor hardware
 you can create different docker image to apply different versions, and port number but will have the same codebase and framework
 
 -Volumes - essential for persistent storage on our host operating system, temp storage incase of deltetion or crashes
-
+<!--
 TO CREATE AN IMAGE
 1. create a file called DockerFile vscode
 
@@ -136,7 +136,7 @@ Docker Networking Drivers
 steps to link our mongo to our container
 -we create a new network 
 -we create a mongo image
--we link the two
+-we link the two -->
 <!--
 //to run our mongo container - afterwards you will successfully connect to your db 
 docker run -it --rm --network my-custom-network mongo:7.0 mongosh --host fastapi-mongo -u mongoadmin -p secret --authenticationDatabase admin mongo-db
