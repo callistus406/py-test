@@ -130,3 +130,36 @@ docker run -p 8000:8000 --name fastapi-app dastapi-server
 
 
 next class we are looking at networking in docker
+Docker Networking Drivers
+-Bridge-HosT-None-Overlay
+
+steps to link our mongo to our container
+-we create a new network 
+-we create a mongo image
+-we link the two
+
+//to run our mongo container - afterwards you will successfully connect to your db 
+docker run -it --rm --network my-custom-network mongo:7.0 mongosh --host fastapi-mongo -u mongoadmin -p secret --authenticationDatabase admin mongo-db
+
+
+
+
+docker run -d --network mynetworktwo  --name mongo-express -p 8081:8081 -e ME_CONFIG_OPTIONS_EDITORTHEME="ambiance" -e ME_CONFIG_MONGODB_SERVER="fastapi-mongo" -e ME_CONFIG_MONGODB_ADMINUSERNAME="mongoadmin" -e ME_CONFIG_MONGODB_ADMINPASSWORD="secret" -e ME_CONFIG_BASICAUTH_USERNAME="mongoadmin" -e ME_CONFIG_BASICAUTH_PASSWORD="secret" mongo-express
+
+
+
+
+
+
+
+
+docker run -d --network my-mongo-network --name mongo-express -p 8081:8081 -e ME_CONFIG_OPTIONS_EDITORTHEME="ambiance" -e ME_CONFIG_MONGODB_SERVER="fastapi-mongo" -e ME_CONFIG_MONGODB_ADMINUSERNAME="mongoadmin" -e ME_CONFIG_MONGODB_ADMINPASSWORD="secret" -e ME_CONFIG_BASICAUTH_USERNAME="mongoadmin" -e ME_CONFIG_BASICAUTH_PASSWORD="secret" mongo-express
+
+docker run -d --name my-mongo-express --network mongonetworktwo -p 8081:8081 -e ME_CONFIG_MONGODB_URL="mongodb://admin:secret_password@my-mongodb:27017/?authSource=admin" mongo-express:latest
+
+
+-docker compose up builds, configures, connects, and starts your entire multi-container application stack with a single command.Instead of forcing you to manually run multiple docker run commands and stitch them together, it acts as an orchestrator that reads your docker-compose.yml blueprint and handles the deployment from start to finish.
+
+-docker compose downStops and destroys the application stack.Stops running containers, then deletes the containers and their internal filesystems, networks, and default configurations.
+
+The purpose of a docker-compose.yml file is to act as a single, centralized blueprint that defines and configures all the moving parts of a multi-container application.Instead of managing your containers one by one using long, complex terminal commands, the docker-compose.yml file allows you to write down your entire infrastructure as code. This makes your project fully repeatable and shareable.
