@@ -137,13 +137,13 @@ steps to link our mongo to our container
 -we create a new network 
 -we create a mongo image
 -we link the two
-
+<!--
 //to run our mongo container - afterwards you will successfully connect to your db 
 docker run -it --rm --network my-custom-network mongo:7.0 mongosh --host fastapi-mongo -u mongoadmin -p secret --authenticationDatabase admin mongo-db
 
 
 
-<!--
+
 docker run -d --network mynetworktwo  --name mongo-express -p 8081:8081 -e ME_CONFIG_OPTIONS_EDITORTHEME="ambiance" -e ME_CONFIG_MONGODB_SERVER="fastapi-mongo" -e ME_CONFIG_MONGODB_ADMINUSERNAME="mongoadmin" -e ME_CONFIG_MONGODB_ADMINPASSWORD="secret" -e ME_CONFIG_BASICAUTH_USERNAME="mongoadmin" -e ME_CONFIG_BASICAUTH_PASSWORD="secret" mongo-express
 
 
