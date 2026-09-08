@@ -143,7 +143,7 @@ docker run -it --rm --network my-custom-network mongo:7.0 mongosh --host fastapi
 
 
 
-
+<!--
 docker run -d --network mynetworktwo  --name mongo-express -p 8081:8081 -e ME_CONFIG_OPTIONS_EDITORTHEME="ambiance" -e ME_CONFIG_MONGODB_SERVER="fastapi-mongo" -e ME_CONFIG_MONGODB_ADMINUSERNAME="mongoadmin" -e ME_CONFIG_MONGODB_ADMINPASSWORD="secret" -e ME_CONFIG_BASICAUTH_USERNAME="mongoadmin" -e ME_CONFIG_BASICAUTH_PASSWORD="secret" mongo-express
 
 
@@ -155,8 +155,8 @@ docker run -d --network mynetworktwo  --name mongo-express -p 8081:8081 -e ME_CO
 
 docker run -d --network my-mongo-network --name mongo-express -p 8081:8081 -e ME_CONFIG_OPTIONS_EDITORTHEME="ambiance" -e ME_CONFIG_MONGODB_SERVER="fastapi-mongo" -e ME_CONFIG_MONGODB_ADMINUSERNAME="mongoadmin" -e ME_CONFIG_MONGODB_ADMINPASSWORD="secret" -e ME_CONFIG_BASICAUTH_USERNAME="mongoadmin" -e ME_CONFIG_BASICAUTH_PASSWORD="secret" mongo-express
 
-docker run -d --name my-mongo-express --network mongonetworktwo -p 8081:8081 -e ME_CONFIG_MONGODB_URL="mongodb://admin:secret_password@my-mongodb:27017/?authSource=admin" mongo-express:latest
-
+docker run -d --name my-mongo-express --network mongonetworktwo -p 8081:8081 -e ME_CONFIG_MONGODB_URL="mongodb://admin:secret_password@my-mongodb:27017/?authSource=admin" mongo-express:latest](url)
+-->
 
 -docker compose up builds, configures, connects, and starts your entire multi-container application stack with a single command.Instead of forcing you to manually run multiple docker run commands and stitch them together, it acts as an orchestrator that reads your docker-compose.yml blueprint and handles the deployment from start to finish.
 
