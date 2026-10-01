@@ -11,8 +11,25 @@ import time
 from middleware.middleware import validate_token,validate_admin,require_role
 from utils.token_blacklist import BlacklistToken
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+import redis.asyncio as redis
 
 app = FastAPI()
+
+
+@asynccontextmanager
+async def load_redis(app: FastAPI):
+    app.state.redis = redis.from_url("redis://redis-cache:6379/0", decode_responses=True)
+
+    # ping redis
+    await app.state.redis.ping()
+    try:
+        yield
+    except Exception as e :
+        print(e)
+    finally:
+        await app.state.redis.aclose()
+    
 
 
 @app.middleware("http")
