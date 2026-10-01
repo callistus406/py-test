@@ -1,9 +1,9 @@
 from  pydantic import BaseModel, Field
 from enum import Enum
-from typing import Optional,  Generic, TypeVar,List
+from typing import Optional,  Generic, TypeVar,List,Any
 
 class UserRole(str,Enum):
-    ADMIN="admin"
+    ADMIN="Admin" 
     USER="user"
 
 class Task_Status(str, Enum):
@@ -12,7 +12,7 @@ class Task_Status(str, Enum):
     COMPLETED="completed"
 
 class Task_Priority(str, Enum):
-    HIGH="low"
+    HIGH="high"
     MEDIUM="medium"
     LOW="low"
 
@@ -23,8 +23,9 @@ class UserResponse(BaseModel):
     name: str
     role: str
     
+
 class Login_Response(BaseModel):
-    userId:Optional [int]= None
+    user_id:Optional [str]= None
     name:Optional [str]= None
     email:Optional [str]= None
     role:Optional [str] = None
@@ -34,22 +35,18 @@ T = TypeVar('T')
 class ApiResponse(BaseModel, Generic[T]):
     success: bool
     message: str
-    data: T
+    data: Any
 
 class Get_Task_Response(BaseModel):
-    title: str 
-    description:str 
-    status: str
-    priority:str
-    user_id: int
-    start_date: str
-    end_date:str
-    created_by: int
-    updated_by: int
-    completed_at: Optional[str]
-    id: int
-    created_at:str
-    updated_at: str
+    title: Optional[str] 
+    description:Optional[str] 
+    status: Optional[str]
+    priority:Optional[str]
+    user_id: Optional[str]
+    start_date: Optional[str]
+    end_date:Optional[str]
+    created_at:Optional[str]
+    updated_at: Optional[str]
 
 class Reply(BaseModel):
     id: Optional[int] = None
@@ -80,13 +77,13 @@ class Create_User(UserBase):
     user_name: str = Field(..., min_length=3, max_length=50, description="The username of the user", )#validat username
     email: str = Field(...,description="The email of the user", ) #todo validate email
     name: str = Field(..., min_length=3, max_length=50, description="The username of the user")
-    role: str = UserRole.USER
     password: str= Field(...,min_length=8)
 
 class Update_User(BaseModel):
-    username: str = Field(None, min_length=3, max_length=50, description="The username of the user", )#validat username
+    user_name: str = Field(None, min_length=3, max_length=50, description="The username of the user", )#validat username
     email: str = Field(None,description="The email of the user",) #todo validate email
     name: str = Field(None, min_length=3, max_length=50, description="The username of the user")
+    role:str
 
 
 
@@ -95,7 +92,6 @@ class Create_Task(BaseModel):
     description:str = Field(...,min_length=10, max_length=500)
     status: Task_Status = Field(default=Task_Status.PENDING)
     priority: Task_Priority = Field(default=Task_Priority.LOW)
-    user_id: int = Field(..., description="this is a temporay solution")
     start_date: str
     end_date:str
 
@@ -107,8 +103,12 @@ class Filter_Task(BaseModel):
     end_date:Optional [str]  = None
 
 class Create_comment(BaseModel):
-    user_id: int
-    task_id: int
+
+    comment: str = Field(...,max_length = 800)
+    replies:  Optional[list[Reply]] = []
+
+
+class Reply(BaseModel):
     comment: str = Field(...,max_length = 800)
 
 

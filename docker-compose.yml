@@ -1,0 +1,47 @@
+
+services:
+  fast-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGO_URL=${MONGO_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - ALGO=${JWT_ALGO}
+
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - open-net
+
+  mongo:
+    image: mongo:7.0
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example 
+    ports:
+      - 27017:27017
+    networks:
+      - open-net
+    healthcheck:
+      test: ["CMD", "mongosh", "---eval", "db.adminCommand('ping')"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+networks:
+  open-net:
+    driver: bridge
+
+
+ 
+    
+
+
+
+
+  
