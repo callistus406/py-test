@@ -5,3 +5,4 @@ uvicorn
 python-jose[cryptography]
 pydantic
 pymongo
+redis
