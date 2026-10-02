@@ -1,39 +1,47 @@
-version: "3.8"  # Updated from version 2 to support modern healthcheck conditions
 
 services:
   fast-api:
     build: .
     ports:
-      - "8000:8000"  
+      - "8000:8000"
     environment:
       - MONGO_URL=${MONGO_URL}
       - JWT_SECRET=${JWT_SECRET}
       - ALGO=${JWT_ALGO}
+
     volumes:
-      - .:/usr/src/app  
+      - .:/usr/src/app
     depends_on:
       mongo:
         condition: service_healthy
     networks:
-      - my-mongo-network
+      - open-net
 
-  mongo:  # Aligned perfectly to the left with fast-api
+  mongo:
     image: mongo:7.0
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root  # Fixed missing underscore in MONGO_INITDB
-      MONGO_INITDB_ROOT_PASSWORD: example # Fixed missing underscore in MONGO_INITDB
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example 
     ports:
-      - "27017:27017"
+      - 27017:27017
     networks:
-      - my-mongo-network  # Removed the trailing colon here
+      - open-net
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"] 
-      interval: 1m30s  # Lowered interval so you aren't waiting 1.5 minutes for health check
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-
+      test: ["CMD", "mongosh", "---eval", "db.adminCommand('ping')"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
 networks:
-  my-mongo-network:
+  open-net:
     driver: bridge
+
+
+ 
+    
+
+
+
+
+  
