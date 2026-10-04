@@ -33,6 +33,58 @@ services:
       timeout: 30s
       retries: 5
       start_period: 30s
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:lts
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    ports:
+      - 9443:9443
+      # - 8000:8000  # Remove if you do not intend to use Edge Agents
+    networks:
+      - open-net
+
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: redis-cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass YourSecurePasswordHere --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - open-net
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redis_insight
+    ports:
+      - "5540:5540"
+    environment:
+      - RI_REDIS_HOST=redis-cache
+      - RI_REDIS_PORT=6379
+      - RI_REDIS_PASSWORD=YourSecurePasswordHere
+      - RI_REDIS_ALIAS=redis-cache
+    volumes:
+      - redisinsight_data:/db
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - open-net
+
+volumes:
+  redis_data:
+    name: redis_data
+  portainer_data:
+    name: portainer_data
+  redisinsight_data:
+    name: redisinsight_data
+
+
 networks:
   open-net:
     driver: bridge
