@@ -259,16 +259,15 @@ def update_reply(  ):
 
 
 
-# @app.post("/logout", status_code=status.HTTP_200_OK,response_model=ApiResponse)
-# def update_reply(  user=Depends(validate_token) ):
-
-#      blacklist = BlacklistToken()
-#      blacklist.add_token(user["token"])
-#      print(user["token"], "opioioi")
-#      return {
-#         "success":True,
-#         "message": "Logout successful",
-#         "data": None}
+@app.post("/logout", status_code=status.HTTP_200_OK,response_model=ApiResponse)
+def update_reply(  user=Depends(validate_token) ):
+     print(user["token"])
+     add_token(user["token"])
+     print(user["token"], "opioioi")
+     return {
+        "success":True,
+        "message": "Logout successful",
+        "data": None}
 
 
 

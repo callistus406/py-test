@@ -1,7 +1,7 @@
 import redis.asyncio as redis
 
 
-client = redis.from_url("redis://default:YourSecurePasswordHere@redis-cache:6373/0", decode_responses=True)
+client = redis.from_url("redis://default:YourSecurePasswordHere@redis-cache:6379/0", decode_responses=True)
 
 
 async def add_token(token:str):
