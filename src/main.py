@@ -9,7 +9,7 @@ import logging
 from utils import logging
 import time
 from middleware.middleware import validate_token,validate_admin,require_role
-from utils.token_blacklist import BlacklistToken
+from utils.token_blacklist import  is_blacklisted,add_token
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import redis.asyncio as redis
