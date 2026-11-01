@@ -110,7 +110,7 @@ class Database:
                 "name": user_data.name,
                 "password": password, #Q hare are we returning this as hashed in the userResponse?
                 "email": user_data.email,
-                "role": UserRole.USER
+                "role": user_data.role
             })
             print(user)
             return None
