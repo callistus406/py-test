@@ -260,14 +260,13 @@ def update_reply(  ):
 
 
 @app.post("/logout", status_code=status.HTTP_200_OK,response_model=ApiResponse)
-def update_reply(  user=Depends(validate_token) ):
-     print(user["token"])
-     add_token(user["token"])
-     print(user["token"], "opioioi")
+async def logout(  user=Depends(validate_token) ):
+     await add_token(user["token"], user.get("exp"))
      return {
         "success":True,
         "message": "Logout successful",
-        "data": None}
+        "data": None
+        }
 
 
 

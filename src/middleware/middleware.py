@@ -15,18 +15,19 @@ async def validate_token(token:str=Depends(extract_token)):
         payload = jwt.decode(token=token,key=SECRET,algorithms=[ALGO])
         user_id  = payload["sub"]
         role = payload["role"]
-        print(token, "middleware")
-        print( await is_blacklisted(token))
         if await is_blacklisted(token):
-            raise HTTPException(detail="Unautorized",status_code=403)
+            raise HTTPException(detail="Token has been revoked",status_code=401)
         if user_id is None:
-            raise HTTPException(detail="Invalid token",status_code=401) 
+            raise HTTPException(detail="Invalid token",status_code=401)
 
         return{
             "user_id": user_id,
             "role": role,
-            # "token": token
+            "token": token,
+            "exp": payload.get("exp"),
         }
+    except HTTPException:
+        raise
     except Exception as e:
         print(e)
         raise HTTPException(detail="Invalid or expired token", status_code=401)

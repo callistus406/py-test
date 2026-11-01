@@ -1,19 +1,20 @@
+import os
+import time
+
 import redis.asyncio as redis
 
+REDIS_URL = os.getenv("REDIS_URL", "redis://default:YourSecurePasswordHere@redis-cache:6379/0")
 
-client = redis.from_url("redis://default:YourSecurePasswordHere@redis-cache:6379/0", decode_responses=True)
+client = redis.from_url(REDIS_URL, decode_responses=True)
 
-
-async def add_token(token:str):
-    response = await client.sadd("blacklist:tokens",token)
-
-        # blacklist.add(token)
-    print("Token added", response)
-
-async def is_blacklisted(token:str):
-    is_blacklisted = await client.sismember("blacklist:tokens", token)
-    print(is_blacklisted, "this is from is blacklisted")
-    return bool(is_blacklisted)
+PREFIX = "blacklist:token:"
 
 
+async def add_token(token: str, exp: int | None = None):
+    # keep the entry only until the token would have expired anyway
+    ttl = max(int(exp - time.time()), 1) if exp else 60 * 60
+    await client.set(PREFIX + token, "1", ex=ttl)
 
+
+async def is_blacklisted(token: str) -> bool:
+    return bool(await client.exists(PREFIX + token))
