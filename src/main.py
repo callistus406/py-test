@@ -1,5 +1,5 @@
 
-from fastapi import FastAPI, Request, Query, status, HTTPException,Body,Depends
+from fastapi import FastAPI, Request, Query, status, HTTPException,Body,Depends,WebSocket,WebSocketDisconnect
 import json
 from schema.schema import Create_User, Filter_Task,Update_task, Update_comment,Update_reply,Update_User, Create_Task, Create_comment,Login_DTO,Login_Response,UserRole, ApiResponse,Get_Task_Response,UserResponse
 import model.database as database
@@ -13,7 +13,8 @@ from utils.token_blacklist import  is_blacklisted,add_token
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import redis.asyncio as redis
-
+from utils.connection_manager import manager
+from model.database import conversation_collection,message_collection
 app = FastAPI()
 
 
@@ -88,6 +89,34 @@ app.add_middleware(
     allow_methods=[ "POST","PATCH"],
     allow_headers=["*"],
 )
+
+
+
+# 
+@app.websocket("/ws")
+async def new_connection(websocket:WebSocket,user_id):
+     await  manager.connect(websocket, user_id)
+
+     try:
+         while True:
+             text =await websocket.receive_text()
+             if not text:
+                 continue
+             if len(text) > 0:
+                 await websocket.send_json({
+                     "user_id": user_id,
+                     "message": text,
+                 })
+                #  conversation_collection.insert_one({})
+     except WebSocketDisconnect:
+         
+        await manager.disconnect(websocket)
+
+             
+     except Exception as e:
+         await manager.disconnect(websocket)
+         print(e)
+         
 
     
 # ========================|| Authentication endpoints ||====================================
