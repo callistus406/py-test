@@ -435,3 +435,11 @@ class Database:
                 detail="Comment not found",
                 status_code=409
             )
+
+
+
+
+# chat system
+conversation_collection = db["conversation"]
+message_collection = db["message"]
+
